@@ -143,5 +143,5 @@ export function createBuiltinTools(): ToolDefinition[] {
     }
   };
 
-  return [readFile, writeTodo, webFetch, browser, webSearch];
+  return []
 }

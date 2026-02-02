@@ -7,7 +7,6 @@ import { SessionStore } from "./session/SessionStore";
 import { createBuiltinTools } from "./tools/builtin";
 import { ToolRegistry } from "./tools/ToolRegistry";
 import { ReActAgent } from "./agent/ReActAgent";
-import { FeishuWsClient } from "./integrations/feishu/ws";
 
 const logger = createLogger((process.env.LOG_LEVEL as any) ?? "info");
 
@@ -21,7 +20,7 @@ function requireEnv(name: string): string {
 
 function createAgent() {
   const apiKey = requireEnv("OPENAI_API_KEY");
-  const model = process.env.OPENAI_MODEL ?? "gpt-4o-mini";
+  const model = process.env.OPENAI_MODEL;
   const summaryModel = process.env.OPENAI_SUMMARY_MODEL ?? model;
 
   const llm = new OpenAIClient({
@@ -74,46 +73,9 @@ async function runCli(agent: ReActAgent) {
   });
 }
 
-async function runFeishu(agent: ReActAgent) {
-  const url = process.env.FEISHU_WS_URL;
-  if (!url) {
-    logger.warn("FEISHU_WS_URL not set; skipping Feishu WS.");
-    return;
-  }
-
-  let headers: Record<string, string> | undefined;
-  if (process.env.FEISHU_WS_HEADERS) {
-    try {
-      headers = JSON.parse(process.env.FEISHU_WS_HEADERS);
-    } catch (error) {
-      logger.warn("Failed to parse FEISHU_WS_HEADERS JSON", { error: (error as Error).message });
-    }
-  }
-
-  const client = new FeishuWsClient({
-    url,
-    headers,
-    logger,
-    onEvent: async (event) => {
-      const sessionId = "feishu";
-      const text = JSON.stringify(event);
-      const reply = await agent.run(sessionId, text);
-      logger.info("Feishu event handled", { reply });
-    }
-  });
-
-  client.connect();
-}
-
 async function main() {
   const { agent } = createAgent();
-
-  const mode = process.env.RUN_MODE ?? "feishu";
-  if (mode === "cli") {
-    await runCli(agent);
-  } else {
-    await runFeishu(agent);
-  }
+  await runCli(agent);
 }
 
 main().catch((error) => {

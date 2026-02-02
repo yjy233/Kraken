@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Overview
 
-Kraken is a minimal ReAct-style AI assistant implemented in TypeScript. It features a soft sandbox for file access, an OpenAI-compatible LLM client, session compression via summarization, a tool execution system, and Feishu WebSocket event intake.
+Kraken is a minimal ReAct-style AI assistant implemented in TypeScript. It features a soft sandbox for file access, an OpenAI-compatible LLM client, session compression via summarization, and a tool execution system.
 
 ## Development Commands
 
@@ -56,17 +56,10 @@ npm start
 
 ### Modes
 
-**CLI Mode** (`RUN_MODE=cli`)
+**CLI Mode**
 - Interactive readline interface
 - Single session ID: "cli"
 - User types messages, agent responds
-
-**Feishu Mode** (`RUN_MODE=feishu`, default)
-- Connects to Feishu WebSocket endpoint
-- Processes events as JSON strings
-- Single session ID: "feishu"
-- Requires `FEISHU_WS_URL` to be set
-- Handles ping/pong keepalive and challenge-response handshake
 
 ## Configuration
 
@@ -79,7 +72,6 @@ All configuration via environment variables (see `.env` or shell exports):
 - `OPENAI_MODEL` (default: `gpt-4o-mini`)
 - `OPENAI_BASE_URL` (for alternative providers)
 - `OPENAI_SUMMARY_MODEL` (defaults to `OPENAI_MODEL`)
-- `RUN_MODE` (`cli` or `feishu`)
 - `REACT_MAX_STEPS` (default: 6)
 - `REACT_TEMPERATURE` (default: 0.2)
 - `MAX_SESSION_TOKENS` (default: 4000)
@@ -90,10 +82,6 @@ All configuration via environment variables (see `.env` or shell exports):
 - `SANDBOX_ROOT` (default: current working directory)
 - `SANDBOX_ALLOWED_DIRS` (comma-separated absolute paths)
 - `SANDBOX_MAX_FILE_BYTES` (default: 1048576)
-
-**For Feishu:**
-- `FEISHU_WS_URL` (WebSocket endpoint)
-- `FEISHU_WS_HEADERS` (JSON string for auth headers)
 
 **For Web Search:**
 - `WEB_SEARCH_ENDPOINT` (required if using `web_search` tool)
