@@ -16,7 +16,7 @@ npm install
 npm run dev
 
 # Build TypeScript to JavaScript
-npm build
+npm run build
 
 # Run production build
 npm start
@@ -66,6 +66,7 @@ npm start
 - Processes events as JSON strings
 - Single session ID: "feishu"
 - Requires `FEISHU_WS_URL` to be set
+- Handles ping/pong keepalive and challenge-response handshake
 
 ## Configuration
 
@@ -77,14 +78,26 @@ All configuration via environment variables (see `.env` or shell exports):
 **Common:**
 - `OPENAI_MODEL` (default: `gpt-4o-mini`)
 - `OPENAI_BASE_URL` (for alternative providers)
+- `OPENAI_SUMMARY_MODEL` (defaults to `OPENAI_MODEL`)
 - `RUN_MODE` (`cli` or `feishu`)
 - `REACT_MAX_STEPS` (default: 6)
+- `REACT_TEMPERATURE` (default: 0.2)
 - `MAX_SESSION_TOKENS` (default: 4000)
+- `SUMMARY_TARGET_TOKENS` (default: 600)
 - `ALLOW_NETWORK` (set to `true` to enable `web_fetch`, `browser`, `web_search`)
+
+**For Sandbox:**
+- `SANDBOX_ROOT` (default: current working directory)
+- `SANDBOX_ALLOWED_DIRS` (comma-separated absolute paths)
+- `SANDBOX_MAX_FILE_BYTES` (default: 1048576)
 
 **For Feishu:**
 - `FEISHU_WS_URL` (WebSocket endpoint)
 - `FEISHU_WS_HEADERS` (JSON string for auth headers)
+
+**For Web Search:**
+- `WEB_SEARCH_ENDPOINT` (required if using `web_search` tool)
+- `WEB_SEARCH_API_KEY` (required if using `web_search` tool)
 
 ## Adding New Tools
 
@@ -96,7 +109,9 @@ All configuration via environment variables (see `.env` or shell exports):
 ## Key Patterns
 
 - All LLM responses must be valid JSON with `type` field
+- Response parsing uses `extractJson()` utility (finds first `{` to last `}` and parses)
 - Session compression happens automatically when token threshold exceeded
+- Token counting is approximate: `text.length / 4`
 - Sandbox throws errors for paths outside allowlist - no bypass mechanism
 - Network tools require explicit opt-in via `ALLOW_NETWORK=true`
 - Tool execution results feed back into the ReAct loop as messages with `role: "tool"`
