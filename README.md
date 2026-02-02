@@ -1,6 +1,8 @@
 # Kraken AI Assistant (TypeScript)
 
-![Kraken AI Assistant Logo](assets/logo.png)
+<p align="center">
+  <img src="assets/logo.png" alt="Kraken AI Assistant Logo" width="180" />
+</p>
 
 A minimal ReAct-style AI assistant in TypeScript with a simple sandbox, OpenAI-compatible LLM client, session compression, tool system, and Feishu WebSocket event intake.
 
