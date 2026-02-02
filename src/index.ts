@@ -20,7 +20,7 @@ function requireEnv(name: string): string {
 
 function createAgent() {
   const apiKey = requireEnv("OPENAI_API_KEY");
-  const model = process.env.OPENAI_MODEL;
+  const model = process.env.OPENAI_MODEL ?? "gpt-4o-mini";
   const summaryModel = process.env.OPENAI_SUMMARY_MODEL ?? model;
 
   const llm = new OpenAIClient({
