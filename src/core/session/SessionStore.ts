@@ -32,7 +32,11 @@ export class SessionStore {
 
   async compressIfNeeded(sessionId: string): Promise<void> {
     const messages = this.get(sessionId);
-    const totalTokens = messages.reduce((sum, msg) => sum + approximateTokens(msg.content), 0);
+    const totalTokens = messages.reduce((sum, msg) => {
+      const content = msg.content || "";
+      const toolCallsText = msg.tool_calls ? JSON.stringify(msg.tool_calls) : "";
+      return sum + approximateTokens(content + toolCallsText);
+    }, 0);
 
     if (totalTokens <= this.options.maxTokens) return;
 
@@ -42,7 +46,15 @@ export class SessionStore {
 
     if (head.length === 0) return;
 
-    const historyText = head.map((msg) => `${msg.role.toUpperCase()}: ${msg.content}`).join("\n");
+    const historyText = head
+      .map((msg) => {
+        let text = `${msg.role.toUpperCase()}: ${msg.content || ""}`;
+        if (msg.tool_calls) {
+          text += ` [Tool calls: ${msg.tool_calls.map((tc) => tc.function.name).join(", ")}]`;
+        }
+        return text;
+      })
+      .join("\n");
 
     const summaryResponse = await this.llm.chatCompletion({
       model: this.options.summaryModel,
@@ -63,7 +75,7 @@ export class SessionStore {
 
     const summaryMessage: ChatMessage = {
       role: "system",
-      content: `Summary of earlier conversation: ${summaryResponse.content.trim()}`
+      content: `Summary of earlier conversation: ${summaryResponse.content?.trim() || ""}`
     };
 
     this.sessions.set(sessionId, [summaryMessage, ...tail]);

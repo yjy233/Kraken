@@ -4,10 +4,32 @@ export interface OpenAIClientOptions {
   timeoutMs?: number;
 }
 
+export interface ToolCall {
+  id: string;
+  type: "function";
+  function: {
+    name: string;
+    arguments: string;
+  };
+}
+
 export interface ChatMessage {
   role: "system" | "user" | "assistant" | "tool";
-  content: string;
+  content: string | null;
   name?: string;
+  tool_calls?: ToolCall[];
+  tool_call_id?: string;
+}
+
+export interface FunctionDefinition {
+  name: string;
+  description: string;
+  parameters: Record<string, unknown>;
+}
+
+export interface ToolDefinition {
+  type: "function";
+  function: FunctionDefinition;
 }
 
 export interface ChatCompletionRequest {
@@ -15,10 +37,12 @@ export interface ChatCompletionRequest {
   messages: ChatMessage[];
   temperature?: number;
   max_tokens?: number;
+  tools?: ToolDefinition[];
 }
 
 export interface ChatCompletionResponse {
-  content: string;
+  content: string | null;
+  tool_calls?: ToolCall[];
   raw: unknown;
 }
 
@@ -38,18 +62,27 @@ export class OpenAIClient {
     const timeout = setTimeout(() => controller.abort(), this.timeoutMs);
 
     try {
+      const body: Record<string, unknown> = {
+        model: request.model,
+        messages: request.messages,
+        temperature: request.temperature ?? 0.2
+      };
+
+      if (request.max_tokens) {
+        body.max_tokens = request.max_tokens;
+      }
+
+      if (request.tools && request.tools.length > 0) {
+        body.tools = request.tools;
+      }
+
       const response = await fetch(`${this.baseUrl}/chat/completions`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
           Authorization: `Bearer ${this.apiKey}`
         },
-        body: JSON.stringify({
-          model: request.model,
-          messages: request.messages,
-          temperature: request.temperature ?? 0.2,
-          max_tokens: request.max_tokens
-        }),
+        body: JSON.stringify(body),
         signal: controller.signal
       });
 
@@ -59,8 +92,11 @@ export class OpenAIClient {
       }
 
       const data = await response.json();
-      const content = data?.choices?.[0]?.message?.content ?? "";
-      return { content, raw: data };
+      const message = data?.choices?.[0]?.message;
+      const content = message?.content ?? null;
+      const tool_calls = message?.tool_calls;
+
+      return { content, tool_calls, raw: data };
     } finally {
       clearTimeout(timeout);
     }

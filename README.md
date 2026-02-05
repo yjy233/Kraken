@@ -4,14 +4,17 @@
   <img src="assets/logo.png" alt="Kraken AI Assistant Logo" width="180" />
 </p>
 
-A minimal ReAct-style AI assistant in TypeScript with a simple sandbox, OpenAI-compatible LLM client, session compression, and tool system.
+Kraken is a minimal ReAct-style AI assistant implemented in TypeScript. It features a soft sandbox for file access, an OpenAI-compatible LLM client with standard function calling, session compression via summarization, a tool execution system, and a MessageBus-based architecture for decoupled communication.
 
 ## Features
 - ReAct loop with tool execution
+- OpenAI standard function calling (compatible with all major LLM providers)
+- MessageBus architecture for decoupled communication
 - Soft sandbox for file access (allowlisted paths)
 - OpenAI-style chat completions client (compatible providers)
 - Session compression via summarization
 - Built-in tools: `write_todo`, `read_file`, `web_fetch`, `browser`, `web_search`
+- Modular CLI interface
 
 ## Quick start
 ```bash
@@ -58,10 +61,24 @@ npm run dev
 ## Project structure
 ```
 src/
-  agent/          # ReAct loop
-  llm/            # OpenAI-compatible client
-  sandbox/        # soft sandbox
-  session/        # session compression
-  tools/          # tool registry + builtin tools
-  utils/          # helpers
+  cli/            # CLI interface
+    CLI.ts        # CLI class with MessageBus listeners
+    index.ts      # CLI factory function
+  core/           # Core libraries
+    agent/        # ReAct loop
+    llm/          # OpenAI-compatible client
+    messagebus/   # Event-based communication bus
+    sandbox/      # soft sandbox
+    session/      # session compression
+    tools/        # tool registry + builtin tools
+    utils/        # helpers
+  index.ts        # Entry point
 ```
+
+## Architecture
+
+The project uses a MessageBus pattern for decoupled communication:
+- **MessageBus**: Event emitter for communication between components
+- **Agent**: Emits events (`agent:thinking`, `agent:tool_call`, `agent:tool_result`, `agent:response`, `agent:error`)
+- **CLI**: Subscribes to MessageBus events and displays them to the user
+- This architecture allows easy integration of alternative interfaces (web UI, API server, etc.)
