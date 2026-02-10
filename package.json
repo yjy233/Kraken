@@ -1,4 +1,7 @@
 {
+  "bin": {
+    "kraken": "dist/index.js"
+  },
   "name": "kraken-ai-assistant",
   "version": "0.1.0",
   "private": true,

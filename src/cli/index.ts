@@ -1,3 +1,5 @@
+#!/usr/bin/env node
+
 import { MessageBus } from "../core/messagebus";
 import { createLLMClient, type LLMProtocol } from "../core/llm/LLMClientFactory";
 import { Sandbox } from "../core/sandbox/Sandbox";
@@ -16,6 +18,7 @@ export interface CLIConfig {
   baseUrl?: string;
   timeoutMs?: number;
   anthropicVersion?: string;
+  workspaceRoot?: string;
   sandboxRoot?: string;
   sandboxAllowedDirs?: string[];
   sandboxMaxFileBytes?: number;
@@ -50,8 +53,9 @@ export function createCLI(config: CLIConfig): CLI {
           timeoutMs: config.timeoutMs
         });
 
+  const workspaceRoot = config.workspaceRoot ?? config.sandboxRoot ?? process.cwd();
   const sandbox = new Sandbox({
-    rootDir: config.sandboxRoot ?? process.cwd(),
+    rootDir: workspaceRoot,
     allowedDirs: config.sandboxAllowedDirs,
     maxFileSizeBytes: config.sandboxMaxFileBytes ?? 1024 * 1024
   });

@@ -1,37 +1,33 @@
+#!/usr/bin/env node
 import "dotenv/config";
 import { createCLI } from "./cli";
-import type { LLMProtocol } from "./core/llm/LLMClientFactory";
-
-function requireAnyEnv(names: string[]): string {
-  for (const name of names) {
-    const value = process.env[name];
-    if (value) return value;
-  }
-  throw new Error(`Missing required env var: ${names.join(" or ")}`);
-}
+import { loadKrakenConfig } from "./core/config/loadConfig";
 
 async function main() {
+  const workspaceRoot = process.cwd();
+  const config = await loadKrakenConfig(workspaceRoot);
+  if (!config.apiKey) {
+    throw new Error(
+      "Missing API key. Set LLM_API_KEY or OPENAI_API_KEY, or add apiKey to ~/.Kraken/Kraken.json or ./.Kraken/Kraken.json."
+    );
+  }
   const cli = createCLI({
-    protocol: process.env.LLM_PROTOCOL as LLMProtocol | undefined,
-    apiKey: requireAnyEnv(["LLM_API_KEY", "OPENAI_API_KEY"]),
-    model: process.env.LLM_MODEL ?? process.env.OPENAI_MODEL,
-    summaryModel: process.env.LLM_SUMMARY_MODEL ?? process.env.OPENAI_SUMMARY_MODEL,
-    baseUrl: process.env.LLM_BASE_URL ?? process.env.OPENAI_BASE_URL,
-    anthropicVersion: process.env.ANTHROPIC_VERSION,
-    sandboxRoot: process.env.SANDBOX_ROOT,
-    sandboxAllowedDirs: process.env.SANDBOX_ALLOWED_DIRS?.split(",").map((p) => p.trim()),
-    sandboxMaxFileBytes: process.env.SANDBOX_MAX_FILE_BYTES
-      ? Number(process.env.SANDBOX_MAX_FILE_BYTES)
-      : undefined,
-    maxSessionTokens: process.env.MAX_SESSION_TOKENS
-      ? Number(process.env.MAX_SESSION_TOKENS)
-      : undefined,
-    summaryTargetTokens: process.env.SUMMARY_TARGET_TOKENS
-      ? Number(process.env.SUMMARY_TARGET_TOKENS)
-      : undefined,
-    maxIterations: process.env.REACT_MAX_STEPS ? Number(process.env.REACT_MAX_STEPS) : undefined,
-    temperature: process.env.REACT_TEMPERATURE ? Number(process.env.REACT_TEMPERATURE) : undefined,
-    logLevel: process.env.LOG_LEVEL
+    protocol: config.protocol,
+    apiKey: config.apiKey,
+    model: config.model,
+    summaryModel: config.summaryModel,
+    baseUrl: config.baseUrl,
+    timeoutMs: config.timeoutMs,
+    anthropicVersion: config.anthropicVersion,
+    workspaceRoot,
+    sandboxRoot: config.sandboxRoot,
+    sandboxAllowedDirs: config.sandboxAllowedDirs,
+    sandboxMaxFileBytes: config.sandboxMaxFileBytes,
+    maxSessionTokens: config.maxSessionTokens,
+    summaryTargetTokens: config.summaryTargetTokens,
+    maxIterations: config.maxIterations,
+    temperature: config.temperature,
+    logLevel: config.logLevel
   });
 
   await cli.start();
