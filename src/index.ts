@@ -4,8 +4,9 @@ import { createCLI } from "./cli";
 import { loadKrakenConfig } from "./core/config/loadConfig";
 
 async function main() {
-  const workspaceRoot = process.cwd();
-  const config = await loadKrakenConfig(workspaceRoot);
+  const cwd = process.cwd();
+  const config = await loadKrakenConfig(cwd);
+  const workspaceRoot = config.workspaceRoot ?? cwd;
   if (!config.apiKey) {
     throw new Error(
       "Missing API key. Set LLM_API_KEY or OPENAI_API_KEY, or add apiKey to ~/.Kraken/Kraken.json or ./.Kraken/Kraken.json."

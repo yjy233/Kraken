@@ -3,6 +3,7 @@ import os from "node:os";
 import path from "node:path";
 import type { LLMProtocol } from "../llm/LLMClientFactory";
 
+
 export interface KrakenConfig {
   protocol?: LLMProtocol;
   apiKey?: string;
@@ -41,6 +42,12 @@ function parseAllowedDirs(value: string | undefined): string[] | undefined {
   return parts.length > 0 ? parts : undefined;
 }
 
+
+/**
+ * 三层配置加载，优先级为：环境变量 < ~/.Kraken/Kraken.json < workspace/.Kraken/Kraken.json
+ * @returns 
+ * 
+ */
 function loadEnvConfig(): KrakenConfig {
   return {
     protocol: (process.env.LLM_PROTOCOL as LLMProtocol | undefined) ?? undefined,
