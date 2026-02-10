@@ -1,20 +1,23 @@
 import "dotenv/config";
 import { createCLI } from "./cli";
+import type { LLMProtocol } from "./core/llm/LLMClientFactory";
 
-function requireEnv(name: string): string {
-  const value = process.env[name];
-  if (!value) {
-    throw new Error(`Missing required env var: ${name}`);
+function requireAnyEnv(names: string[]): string {
+  for (const name of names) {
+    const value = process.env[name];
+    if (value) return value;
   }
-  return value;
+  throw new Error(`Missing required env var: ${names.join(" or ")}`);
 }
 
 async function main() {
   const cli = createCLI({
-    apiKey: requireEnv("OPENAI_API_KEY"),
-    model: process.env.OPENAI_MODEL,
-    summaryModel: process.env.OPENAI_SUMMARY_MODEL,
-    baseUrl: process.env.OPENAI_BASE_URL,
+    protocol: process.env.LLM_PROTOCOL as LLMProtocol | undefined,
+    apiKey: requireAnyEnv(["LLM_API_KEY", "OPENAI_API_KEY"]),
+    model: process.env.LLM_MODEL ?? process.env.OPENAI_MODEL,
+    summaryModel: process.env.LLM_SUMMARY_MODEL ?? process.env.OPENAI_SUMMARY_MODEL,
+    baseUrl: process.env.LLM_BASE_URL ?? process.env.OPENAI_BASE_URL,
+    anthropicVersion: process.env.ANTHROPIC_VERSION,
     sandboxRoot: process.env.SANDBOX_ROOT,
     sandboxAllowedDirs: process.env.SANDBOX_ALLOWED_DIRS?.split(",").map((p) => p.trim()),
     sandboxMaxFileBytes: process.env.SANDBOX_MAX_FILE_BYTES

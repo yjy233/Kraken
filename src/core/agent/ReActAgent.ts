@@ -1,4 +1,4 @@
-import type { OpenAIClient, ChatMessage, ToolDefinition as OpenAIToolDef } from "../llm/OpenAIClient";
+import type { LLMClient, ChatMessage, ToolDefinition as OpenAIToolDef } from "../llm/types";
 import type { ToolRegistry } from "../tools/ToolRegistry";
 import type { SessionStore } from "../session/SessionStore";
 import type { Sandbox } from "../sandbox/Sandbox";
@@ -12,7 +12,7 @@ export interface ReActAgentOptions {
 }
 
 export class ReActAgent {
-  private llm: OpenAIClient;
+  private llm: LLMClient;
   private tools: ToolRegistry;
   private sessions: SessionStore;
   private sandbox: Sandbox;
@@ -21,7 +21,7 @@ export class ReActAgent {
   private messageBus?: MessageBus;
 
   constructor(params: {
-    llm: OpenAIClient;
+    llm: LLMClient;
     tools: ToolRegistry;
     sessions: SessionStore;
     sandbox: Sandbox;

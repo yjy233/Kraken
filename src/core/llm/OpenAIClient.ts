@@ -1,52 +1,12 @@
+import type { ChatCompletionRequest, ChatCompletionResponse, LLMClient } from "./types";
+
 export interface OpenAIClientOptions {
   apiKey: string;
   baseUrl?: string;
   timeoutMs?: number;
 }
 
-export interface ToolCall {
-  id: string;
-  type: "function";
-  function: {
-    name: string;
-    arguments: string;
-  };
-}
-
-export interface ChatMessage {
-  role: "system" | "user" | "assistant" | "tool";
-  content: string | null;
-  name?: string;
-  tool_calls?: ToolCall[];
-  tool_call_id?: string;
-}
-
-export interface FunctionDefinition {
-  name: string;
-  description: string;
-  parameters: Record<string, unknown>;
-}
-
-export interface ToolDefinition {
-  type: "function";
-  function: FunctionDefinition;
-}
-
-export interface ChatCompletionRequest {
-  model: string;
-  messages: ChatMessage[];
-  temperature?: number;
-  max_tokens?: number;
-  tools?: ToolDefinition[];
-}
-
-export interface ChatCompletionResponse {
-  content: string | null;
-  tool_calls?: ToolCall[];
-  raw: unknown;
-}
-
-export class OpenAIClient {
+export class OpenAIClient implements LLMClient {
   private apiKey: string;
   private baseUrl: string;
   private timeoutMs: number;

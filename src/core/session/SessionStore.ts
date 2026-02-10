@@ -1,6 +1,5 @@
 import { approximateTokens } from "../utils/text";
-import type { ChatMessage } from "../llm/OpenAIClient";
-import type { OpenAIClient } from "../llm/OpenAIClient";
+import type { ChatMessage, LLMClient } from "../llm/types";
 
 export interface SessionOptions {
   maxTokens: number;
@@ -11,9 +10,9 @@ export interface SessionOptions {
 export class SessionStore {
   private sessions = new Map<string, ChatMessage[]>();
   private options: SessionOptions;
-  private llm: OpenAIClient;
+  private llm: LLMClient;
 
-  constructor(options: SessionOptions, llm: OpenAIClient) {
+  constructor(options: SessionOptions, llm: LLMClient) {
     this.options = options;
     this.llm = llm;
   }

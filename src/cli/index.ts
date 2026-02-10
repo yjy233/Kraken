@@ -1,5 +1,5 @@
 import { MessageBus } from "../core/messagebus";
-import { OpenAIClient } from "../core/llm/OpenAIClient";
+import { createLLMClient, type LLMProtocol } from "../core/llm/LLMClientFactory";
 import { Sandbox } from "../core/sandbox/Sandbox";
 import { SessionStore } from "../core/session/SessionStore";
 import { createBuiltinTools } from "../core/tools/builtin";
@@ -9,10 +9,13 @@ import { createLogger } from "../core/utils/logger";
 import { CLI } from "./CLI";
 
 export interface CLIConfig {
+  protocol?: LLMProtocol;
   apiKey: string;
   model?: string;
   summaryModel?: string;
   baseUrl?: string;
+  timeoutMs?: number;
+  anthropicVersion?: string;
   sandboxRoot?: string;
   sandboxAllowedDirs?: string[];
   sandboxMaxFileBytes?: number;
@@ -30,10 +33,22 @@ export function createCLI(config: CLIConfig): CLI {
   const model = config.model ?? "gpt-4o-mini";
   const summaryModel = config.summaryModel ?? model;
 
-  const llm = new OpenAIClient({
-    apiKey: config.apiKey,
-    baseUrl: config.baseUrl
-  });
+  const protocol = config.protocol ?? "openai";
+  const llm =
+    protocol === "claude"
+      ? createLLMClient({
+          protocol,
+          apiKey: config.apiKey,
+          baseUrl: config.baseUrl,
+          timeoutMs: config.timeoutMs,
+          anthropicVersion: config.anthropicVersion
+        })
+      : createLLMClient({
+          protocol,
+          apiKey: config.apiKey,
+          baseUrl: config.baseUrl,
+          timeoutMs: config.timeoutMs
+        });
 
   const sandbox = new Sandbox({
     rootDir: config.sandboxRoot ?? process.cwd(),
