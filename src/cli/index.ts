@@ -4,7 +4,7 @@ import { MessageBus } from "../core/messagebus";
 import { createLLMClient, type LLMProtocol } from "../core/llm/LLMClientFactory";
 import { Sandbox } from "../core/sandbox/Sandbox";
 import { SessionStore } from "../core/session/SessionStore";
-import { createBuiltinTools } from "../core/tools/builtin";
+import { createBuiltinTools } from "../core/tools/core_tool";
 import { ToolRegistry } from "../core/tools/ToolRegistry";
 import { ReActAgent } from "../core/agent/ReActAgent";
 import { createLogger } from "../core/utils/logger";
