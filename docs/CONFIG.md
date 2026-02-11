@@ -45,8 +45,9 @@
 以下参数当前只读取环境变量（不在 Kraken.json 中生效）：
 
 - `ALLOW_NETWORK`：设为 `true` 时启用 `web_fetch` / `browser` / `web_search`
-- `WEB_SEARCH_ENDPOINT`：`web_search` 的服务地址
-- `WEB_SEARCH_API_KEY`：`web_search` 的 API Key
+- `TAVILY_API_KEY`：`web_search` 的 Tavily API Key
+- `TAVILY_BASE_URL`：Tavily API Base URL（可选，默认 `https://api.tavily.com`）
+- `TAVILY_PROJECT`：Tavily Project ID（可选，用于统计/归属）
 
 ## Kraken.json 示例
 
