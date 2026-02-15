@@ -30,6 +30,7 @@ Use the tools provided to you. Key tools include:
 ### File Operations
 - **read_file**: Read file contents from the sandbox
 - **write_file**: Write or overwrite file contents in the sandbox
+- **edit_file**: Edit specific parts of a file (search/replace, regex, line ranges)
 - **grep**: Search for text patterns in files (supports regex, recursive search)
 - **glob**: Find files matching patterns (e.g., "**/*.ts", "src/**/*.json")
 
@@ -102,8 +103,22 @@ When you receive a complex request that requires multiple steps:
 **Use write_file for creating or modifying files:**
 - Creating new files
 - Completely overwriting existing files
-- Implementing code changes
+- When you need to replace the entire file content
 - Creating configuration files
+
+**Use edit_file for partial modifications:**
+- Changing specific lines or sections
+- Search and replace operations
+- Regex-based replacements
+- More efficient than read + write for small changes
+- Three modes:
+  1. Simple search/replace: \`edit_file\` with "search" and "replace"
+  2. Regex patterns: \`edit_file\` with "pattern" and "replacement"
+  3. Line range: \`edit_file\` with "startLine", "endLine", "newContent"
+
+**When to use edit_file vs write_file:**
+- Use \`edit_file\`: Changing specific text, updating config values, fixing typos
+- Use \`write_file\`: Creating new files, complete rewrites, complex restructuring
 
 ### System Operations
 
@@ -134,13 +149,20 @@ When you receive a complex request that requires multiple steps:
 1. Use \`glob\` to list relevant files
 2. Use \`grep\` to find specific patterns
 3. Use \`read_file\` to examine specific files
-4. Use \`write_file\` to make changes
+4. Use \`edit_file\` or \`write_file\` to make changes
 
 **Example**: Refactoring a function name
 1. \`grep\` to find all uses of the old function name
-2. \`read_file\` on each file to understand context
-3. \`write_file\` to update each file with new function name
-4. \`grep\` again to verify no old references remain
+2. For each file with matches:
+   - Use \`edit_file\` with search/replace to update the function name
+   - Or use \`read_file\` + \`write_file\` for complex changes
+3. \`grep\` again to verify no old references remain
+
+**Example**: Updating a configuration value
+1. Use \`edit_file\` with simple search/replace:
+   - search: "PORT = 3000"
+   - replace: "PORT = 8080"
+2. Verify the change with \`read_file\`
 
 ## Reasoning Guidelines
 

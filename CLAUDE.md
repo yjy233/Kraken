@@ -64,9 +64,9 @@ npm start
 
 **Tool Registry (`src/core/tools/ToolRegistry.ts`)**
 - Simple map-based registry of available tools
-- Builtin tools in `src/core/tools/core_tool/`: `read_file`, `write_file`, `write_todo`, `grep`, `glob`, `bash`, `web_fetch`, `browser`, `web_search`
+- Builtin tools in `src/core/tools/core_tool/`: `read_file`, `write_file`, `edit_file`, `write_todo`, `grep`, `glob`, `bash`, `web_fetch`, `browser`, `web_search`
 - Tools receive `ToolContext` containing `sandbox`, `sessionId`, and `logger`
-- File tools: `read_file`, `write_file`, `grep` (search in files), `glob` (find files by pattern)
+- File tools: `read_file`, `write_file`, `edit_file` (partial edits), `grep` (search in files), `glob` (find files by pattern)
 - System tools: `bash` (execute shell commands)
 - Network tools require `ALLOW_NETWORK=true`: `web_fetch`, `browser`, `web_search`
 

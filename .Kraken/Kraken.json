@@ -1,0 +1,6 @@
+{
+  "protocol": "openai", // claude/gemini
+  "model": "",
+  "summaryModel": "",
+  "baseUrl": ""
+}
