@@ -242,3 +242,30 @@ export function createSpinner(text: string): { update: (text: string) => void; s
     }
   };
 }
+
+/**
+ * Create an input prompt box
+ */
+export function createInputPrompt(): string {
+  const icon = "💭";
+  const label = "You";
+  const prompt = colors.bright + colors.blue + icon + " " + label + colors.reset +
+                 colors.gray + " │ " + colors.reset;
+  return prompt;
+}
+
+/**
+ * Create an input box frame
+ */
+export function createInputBox(maxWidth: number = 80): string {
+  const width = maxWidth - 4;
+  const borderColor = colors.blue;
+
+  const topBorder = borderColor + "┌" + "─".repeat(width - 2) + "┐" + colors.reset;
+  const inputLine = borderColor + "│" + colors.reset + " " +
+                    colors.bright + colors.blue + "💭 You" + colors.reset +
+                    colors.gray + " » " + colors.reset;
+  const bottomBorder = borderColor + "└" + "─".repeat(width - 2) + "┘" + colors.reset;
+
+  return topBorder + "\n" + inputLine;
+}

@@ -7,6 +7,7 @@ import {
   createHeading,
   createDivider,
   createListItem,
+  createInputPrompt,
   formatToolData,
   colors,
   symbols
@@ -23,7 +24,11 @@ export class CLI {
     this.messageBus = params.messageBus;
     this.agent = params.agent;
     this.sessionId = params.sessionId ?? generateSessionId();
-    this.rl = readline.createInterface({ input: process.stdin, output: process.stdout });
+    this.rl = readline.createInterface({
+      input: process.stdin,
+      output: process.stdout,
+      prompt: createInputPrompt()
+    });
 
     this.setupMessageBusListeners();
   }
@@ -99,8 +104,14 @@ export class CLI {
     console.log(createListItem(`Session ID: ${this.sessionId}`, symbols.info));
     console.log("\n" + createDivider("─", 80) + "\n");
 
+    // Show initial prompt
+    this.rl.prompt();
+
     this.rl.on("line", async (line) => {
-      if (!line.trim()) return;
+      if (!line.trim()) {
+        this.rl.prompt();
+        return;
+      }
 
       // Display user message
       console.log("\n" + createHeading("You", 2));
@@ -120,6 +131,7 @@ export class CLI {
 
       // Show prompt again
       console.log();
+      this.rl.prompt();
     });
 
     this.rl.on("close", () => {
