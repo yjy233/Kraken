@@ -6,6 +6,11 @@ import type { Logger } from "../utils/logger";
 import type { MessageBus } from "../messagebus";
 import { SYSTEM_PROMPT } from "./prompts";
 
+/**
+ * 
+ * A ReActAgent that uses a ReAct prompting strategy to interact with an LLM, execute tools, and manage sessions.
+ * The agent will iterate through thinking, tool calling, and responding until it reaches a final answer or hits the iteration limit.
+ */
 export interface ReActAgentOptions {
   model: string;
   maxIterations?: number;
@@ -13,6 +18,9 @@ export interface ReActAgentOptions {
   systemPrompt?: string; // Allow custom system prompt
 }
 
+/**
+ * ReActAgent class that implements the ReAct prompting strategy.
+ */
 export class ReActAgent {
   private llm: LLMClient;
   private tools: ToolRegistry;

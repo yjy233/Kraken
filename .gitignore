@@ -28,3 +28,4 @@ coverage/
 *.tsbuildinfo
 .package.json
 .env
+.Kraken
