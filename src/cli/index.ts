@@ -68,7 +68,8 @@ export async function createCLI(config: CLIConfig): Promise<CLI> {
     {
       maxTokens: config.maxSessionTokens ?? 4000,
       compressionTargetTokens: config.summaryTargetTokens ?? 600,
-      summaryModel
+      summaryModel,
+      workspaceRoot
     },
     llm
   );
@@ -104,7 +105,8 @@ export async function createCLI(config: CLIConfig): Promise<CLI> {
     options: {
       model,
       maxIterations: config.maxIterations ?? 6,
-      temperature: config.temperature ?? 0.2
+      temperature: config.temperature ?? 0.2,
+      workspaceRoot
     },
     messageBus
   });

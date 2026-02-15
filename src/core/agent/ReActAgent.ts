@@ -4,10 +4,10 @@ import type { SessionStore } from "../session/SessionStore";
 import type { Sandbox } from "../sandbox/Sandbox";
 import type { Logger } from "../utils/logger";
 import type { MessageBus } from "../messagebus";
-import { SYSTEM_PROMPT } from "./prompts";
+import { SYSTEM_PROMPT, buildWorkspaceContext } from "./prompts";
 
 /**
- * 
+ *
  * A ReActAgent that uses a ReAct prompting strategy to interact with an LLM, execute tools, and manage sessions.
  * The agent will iterate through thinking, tool calling, and responding until it reaches a final answer or hits the iteration limit.
  */
@@ -16,6 +16,7 @@ export interface ReActAgentOptions {
   maxIterations?: number;
   temperature?: number;
   systemPrompt?: string; // Allow custom system prompt
+  workspaceRoot?: string; // Workspace directory for context
 }
 
 /**
@@ -29,6 +30,7 @@ export class ReActAgent {
   private logger: Logger;
   private options: ReActAgentOptions;
   private messageBus?: MessageBus;
+  private workspaceContextCache?: string;
 
   constructor(params: {
     llm: LLMClient;
@@ -57,7 +59,7 @@ export class ReActAgent {
     for (let step = 0; step < maxIterations; step++) {
       this.messageBus?.emit("agent:thinking", { content: `Step ${step + 1}/${maxIterations}` });
 
-      const messages = this.buildMessages(sessionId);
+      const messages = await this.buildMessages(sessionId);
       const toolDefinitions = this.buildToolDefinitions();
 
       const response = await this.llm.chatCompletion({
@@ -71,6 +73,10 @@ export class ReActAgent {
       if (response.content && !response.tool_calls) {
         this.sessions.append(sessionId, { role: "assistant", content: response.content });
         this.messageBus?.emit("agent:response", { content: response.content });
+
+        // Save session history after each conversation turn
+        await this.sessions.saveHistory(sessionId);
+
         return response.content;
       }
 
@@ -134,6 +140,9 @@ export class ReActAgent {
           });
         }
 
+        // Save history after tool calls complete (before next iteration)
+        await this.sessions.saveHistory(sessionId);
+
         await this.sessions.compressIfNeeded(sessionId);
         continue;
       }
@@ -142,22 +151,58 @@ export class ReActAgent {
       const error = "Invalid model response: no content or tool calls";
       this.sessions.append(sessionId, { role: "assistant", content: error });
       this.messageBus?.emit("agent:error", { error });
+
+      console.log("save history`, message", messages);
+      // Save session history even on error
+      await this.sessions.saveHistory(sessionId);
+
       return error;
     }
 
     const fallback = "I could not finish within the step limit.";
     this.sessions.append(sessionId, { role: "assistant", content: fallback });
     this.messageBus?.emit("agent:error", { error: fallback });
+
+    // Save session history on iteration limit
+    await this.sessions.saveHistory(sessionId);
+
     return fallback;
   }
 
-  private buildMessages(sessionId: string): ChatMessage[] {
+  private async buildMessages(sessionId: string): Promise<ChatMessage[]> {
     const systemMessage: ChatMessage = {
       role: "system",
       content: this.options.systemPrompt ?? SYSTEM_PROMPT
     };
 
-    return [systemMessage, ...this.sessions.get(sessionId)];
+    // Build workspace context message if workspaceRoot is provided
+    // Only build once and cache it
+    if (this.options.workspaceRoot && !this.workspaceContextCache) {
+      try {
+        this.workspaceContextCache = await buildWorkspaceContext({
+          workspaceRoot: this.options.workspaceRoot,
+          maxDepth: 2,
+          maxFiles: 100
+        });
+      } catch (error) {
+        this.logger.warn(`Failed to build workspace context: ${error}`);
+      }
+    }
+
+    const messages = [systemMessage];
+
+    // Add workspace context as a system message if available
+    if (this.workspaceContextCache) {
+      messages.push({
+        role: "system",
+        content: this.workspaceContextCache
+      });
+    }
+
+    // Add session messages
+    messages.push(...this.sessions.get(sessionId));
+
+    return messages;
   }
 
   private buildToolDefinitions(): OpenAIToolDef[] {

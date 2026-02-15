@@ -3,6 +3,8 @@
  */
 
 export { SYSTEM_PROMPT } from "./systemPrompt";
+export { buildWorkspaceContext } from "./workspaceContext";
+export type { WorkspaceContextOptions } from "./workspaceContext";
 
 /**
  * Build a custom system prompt by extending the base prompt

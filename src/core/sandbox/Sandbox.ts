@@ -52,6 +52,21 @@ export class Sandbox {
     await fs.appendFile(resolved, content, "utf-8");
   }
 
+  async listDirectory(requestedPath: string): Promise<string[]> {
+    const resolved = this.resolvePath(requestedPath);
+    const stat = await fs.stat(resolved);
+
+    if (!stat.isDirectory()) {
+      throw new Error("Path is not a directory");
+    }
+
+    const entries = await fs.readdir(resolved, { withFileTypes: true });
+    return entries.map((entry) => {
+      const prefix = entry.isDirectory() ? "[DIR]  " : "[FILE] ";
+      return prefix + entry.name;
+    });
+  }
+
   private isAllowed(resolvedPath: string): boolean {
     return this.allowedDirs.some((dir) => {
       const relative = path.relative(dir, resolvedPath);

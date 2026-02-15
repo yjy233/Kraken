@@ -1,10 +1,12 @@
 import { approximateTokens } from "../utils/text";
 import type { ChatMessage, LLMClient } from "../llm/types";
+import { saveSessionHistory } from "./persistence";
 
 export interface SessionOptions {
   maxTokens: number;
   compressionTargetTokens: number;
   summaryModel: string;
+  workspaceRoot?: string; // Optional workspace root for saving history
 }
 
 export class SessionStore {
@@ -27,6 +29,23 @@ export class SessionStore {
   append(sessionId: string, message: ChatMessage): void {
     const messages = this.get(sessionId);
     messages.push(message);
+  }
+
+  /**
+   * Save session history to disk
+   * Saves to workspace/.Kraken/sessions/:sessionId/history.json
+   */
+  async saveHistory(sessionId: string): Promise<void> {
+    if (!this.options.workspaceRoot) {
+      return; // No workspace configured, skip saving
+    }
+
+    const messages = this.get(sessionId);
+    try {
+      await saveSessionHistory(this.options.workspaceRoot, sessionId, messages);
+    } catch (error) {
+      console.warn(`Failed to save session history for ${sessionId}:`, error);
+    }
   }
 
   async compressIfNeeded(sessionId: string): Promise<void> {

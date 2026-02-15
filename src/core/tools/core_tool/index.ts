@@ -9,6 +9,7 @@ import { createWriteTodoTool } from "./write_todo";
 import { createGrepTool } from "./grep";
 import { createGlobTool } from "./glob";
 import { createBashTool } from "./bash";
+import { createListDirectoryTool } from "./list_directory";
 
 export function createBuiltinTools(): ToolDefinition[] {
   return [
@@ -21,6 +22,7 @@ export function createBuiltinTools(): ToolDefinition[] {
     createBashTool() as ToolDefinition,
     createWebFetchTool() as ToolDefinition,
     createBrowserTool() as ToolDefinition,
-    createWebSearchTool() as ToolDefinition
+    createWebSearchTool() as ToolDefinition,
+    createListDirectoryTool() as ToolDefinition
   ];
 }

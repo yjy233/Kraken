@@ -11,6 +11,7 @@ import {
   colors,
   symbols
 } from "./ui";
+import { generateSessionId } from "./sessionUtils";
 
 export class CLI {
   private messageBus: MessageBus;
@@ -21,7 +22,7 @@ export class CLI {
   constructor(params: { messageBus: MessageBus; agent: ReActAgent; sessionId?: string }) {
     this.messageBus = params.messageBus;
     this.agent = params.agent;
-    this.sessionId = params.sessionId ?? "cli";
+    this.sessionId = params.sessionId ?? generateSessionId();
     this.rl = readline.createInterface({ input: process.stdin, output: process.stdout });
 
     this.setupMessageBusListeners();
@@ -95,6 +96,7 @@ export class CLI {
     console.log(colors.gray + "Powered by ReAct Agent with Advanced Reasoning\n" + colors.reset);
     console.log(createListItem("Type your message and press Enter", symbols.info));
     console.log(createListItem("Press Ctrl+C to exit", symbols.info));
+    console.log(createListItem(`Session ID: ${this.sessionId}`, symbols.info));
     console.log("\n" + createDivider("─", 80) + "\n");
 
     this.rl.on("line", async (line) => {
