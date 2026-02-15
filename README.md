@@ -82,3 +82,10 @@ The project uses a MessageBus pattern for decoupled communication:
 - **Agent**: Emits events (`agent:thinking`, `agent:tool_call`, `agent:tool_result`, `agent:response`, `agent:error`)
 - **CLI**: Subscribes to MessageBus events and displays them to the user
 - This architecture allows easy integration of alternative interfaces (web UI, API server, etc.)
+
+## slash command
+命令系统设计灵活，可以轻松添加更多命令：
+  - /help - 显示帮助
+  - /exit - 退出程序
+  - /save <file> - 保存对话
+  - /model <name> - 切换模型

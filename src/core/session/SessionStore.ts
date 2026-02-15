@@ -48,6 +48,13 @@ export class SessionStore {
     }
   }
 
+  /**
+   * Clear all messages for a session
+   */
+  clear(sessionId: string): void {
+    this.sessions.set(sessionId, []);
+  }
+
   async compressIfNeeded(sessionId: string): Promise<void> {
     const messages = this.get(sessionId);
     const totalTokens = messages.reduce((sum, msg) => {

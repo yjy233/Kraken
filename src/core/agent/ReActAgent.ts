@@ -50,6 +50,13 @@ export class ReActAgent {
     this.messageBus = params.messageBus;
   }
 
+  /**
+   * Clear all messages for a session
+   */
+  clearSession(sessionId: string): void {
+    this.sessions.clear(sessionId);
+  }
+
   async run(sessionId: string, input: string): Promise<string> {
     this.sessions.append(sessionId, { role: "user", content: input });
     await this.sessions.compressIfNeeded(sessionId);

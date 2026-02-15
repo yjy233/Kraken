@@ -269,3 +269,137 @@ export function createInputBox(maxWidth: number = 80): string {
 
   return topBorder + "\n" + inputLine;
 }
+
+/**
+ * Render Markdown text for terminal display
+ * Supports: headings, bold, italic, code blocks, inline code, lists, quotes, links
+ */
+export function renderMarkdown(text: string): string {
+  const lines = text.split("\n");
+  const rendered: string[] = [];
+  let inCodeBlock = false;
+  let codeBlockLang = "";
+  let codeBlockLines: string[] = [];
+
+  for (let i = 0; i < lines.length; i++) {
+    let line = lines[i];
+
+    // Code blocks
+    if (line.startsWith("```")) {
+      if (!inCodeBlock) {
+        // Start code block
+        inCodeBlock = true;
+        codeBlockLang = line.slice(3).trim();
+        codeBlockLines = [];
+      } else {
+        // End code block
+        inCodeBlock = false;
+        const codeContent = codeBlockLines.join("\n");
+        rendered.push(colors.bgBlack + colors.cyan + "┌─ Code" + (codeBlockLang ? ` (${codeBlockLang})` : "") + colors.reset);
+        codeBlockLines.forEach(codeLine => {
+          rendered.push(colors.bgBlack + colors.green + "│ " + codeLine + colors.reset);
+        });
+        rendered.push(colors.bgBlack + colors.cyan + "└" + "─".repeat(50) + colors.reset);
+        codeBlockLang = "";
+      }
+      continue;
+    }
+
+    if (inCodeBlock) {
+      codeBlockLines.push(line);
+      continue;
+    }
+
+    // Headings
+    if (line.startsWith("# ")) {
+      rendered.push(colors.bright + colors.cyan + "\n" + line.slice(2) + colors.reset);
+      rendered.push(colors.cyan + "═".repeat(Math.min(line.length - 2, 60)) + colors.reset);
+      continue;
+    }
+    if (line.startsWith("## ")) {
+      rendered.push(colors.bright + colors.blue + "\n" + line.slice(3) + colors.reset);
+      rendered.push(colors.blue + "─".repeat(Math.min(line.length - 3, 50)) + colors.reset);
+      continue;
+    }
+    if (line.startsWith("### ")) {
+      rendered.push(colors.bright + colors.magenta + line.slice(4) + colors.reset);
+      continue;
+    }
+
+    // Horizontal rule
+    if (line.match(/^(-{3,}|\*{3,}|_{3,})$/)) {
+      rendered.push(colors.gray + "─".repeat(60) + colors.reset);
+      continue;
+    }
+
+    // Blockquote
+    if (line.startsWith("> ")) {
+      const quotedText = line.slice(2);
+      rendered.push(colors.gray + "│ " + colors.cyan + quotedText + colors.reset);
+      continue;
+    }
+
+    // Unordered list
+    if (line.match(/^[\-\*\+]\s+/)) {
+      const listText = line.replace(/^[\-\*\+]\s+/, "");
+      rendered.push(colors.yellow + "  • " + colors.reset + renderInlineMarkdown(listText));
+      continue;
+    }
+
+    // Ordered list
+    if (line.match(/^\d+\.\s+/)) {
+      const match = line.match(/^(\d+)\.\s+(.+)$/);
+      if (match) {
+        const num = match[1];
+        const listText = match[2];
+        rendered.push(colors.yellow + `  ${num}. ` + colors.reset + renderInlineMarkdown(listText));
+        continue;
+      }
+    }
+
+    // Empty line
+    if (line.trim() === "") {
+      rendered.push("");
+      continue;
+    }
+
+    // Regular text with inline formatting
+    rendered.push(renderInlineMarkdown(line));
+  }
+
+  return rendered.join("\n");
+}
+
+/**
+ * Render inline Markdown elements (bold, italic, code, links)
+ */
+function renderInlineMarkdown(text: string): string {
+  // Inline code: `code`
+  text = text.replace(/`([^`]+)`/g, (_, code) => {
+    return colors.bgBlack + colors.green + code + colors.reset;
+  });
+
+  // Bold: **text** or __text__
+  text = text.replace(/\*\*([^*]+)\*\*/g, (_, bold) => {
+    return colors.bright + colors.white + bold + colors.reset;
+  });
+  text = text.replace(/__([^_]+)__/g, (_, bold) => {
+    return colors.bright + colors.white + bold + colors.reset;
+  });
+
+  // Italic: *text* or _text_ (but not in already-processed bold)
+  text = text.replace(/(?<!\*)\*([^*]+)\*(?!\*)/g, (_, italic) => {
+    return colors.dim + colors.white + italic + colors.reset;
+  });
+  text = text.replace(/(?<!_)_([^_]+)_(?!_)/g, (_, italic) => {
+    return colors.dim + colors.white + italic + colors.reset;
+  });
+
+  // Links: [text](url)
+  text = text.replace(/\[([^\]]+)\]\(([^)]+)\)/g, (_, linkText, url) => {
+    return colors.blue + colors.dim + linkText + colors.reset +
+           colors.gray + " (" + url + ")" + colors.reset;
+  });
+
+  return text;
+}
