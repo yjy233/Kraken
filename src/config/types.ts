@@ -52,6 +52,23 @@ export interface AgentConfig {
 }
 
 /**
+ * Message compression configuration
+ */
+export interface CompressionConfig {
+  /** Enable automatic message compression */
+  enabled: boolean;
+
+  /** Compression model (null = use summaryModel or main model) */
+  model: string | null;
+
+  /** Compression trigger threshold (0.5 = 50% of context window) */
+  threshold: number;
+
+  /** Maximum allowed percentage after compression (0.9 = 90%) */
+  maxAllowedPercentage: number;
+}
+
+/**
  * LLM Client configuration
  */
 export interface LLMConfig {
@@ -72,6 +89,9 @@ export interface LLMConfig {
 
   /** Model for session compression. If null, uses main model */
   summaryModel: string | null;
+
+  /** Message compression configuration */
+  compression: CompressionConfig;
 }
 
 /**
@@ -360,7 +380,13 @@ export const DEFAULT_CONFIG: KrakenConfig = {
     baseUrl: "https://api.openai.com/v1",
     timeoutMs: 60000,
     maxRetries: 3,
-    summaryModel: null
+    summaryModel: null,
+    compression: {
+      enabled: true,
+      model: null,
+      threshold: 0.5,
+      maxAllowedPercentage: 0.9
+    }
   },
 
   session: {

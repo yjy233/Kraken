@@ -1,6 +1,12 @@
 {
-  "protocol": "openai", // claude/gemini
+  "protocol": "",
   "model": "",
   "summaryModel": "",
-  "baseUrl": ""
+  "baseUrl": "",
+  "compression": {
+    "enabled": true,
+    "model": "",
+    "threshold": 0.5,
+    "maxAllowedPercentage": 0.9
+  }
 }
