@@ -14,6 +14,8 @@ export interface OpenAIClientOptions {
   compressionThreshold?: number;
   /** Maximum allowed percentage after compression (default: 0.9 = 90%) */
   maxAllowedPercentage?: number;
+  /** Manually specified context window size (if not specified, auto-detect from model info) */
+  contextWindow?: number;
 }
 
 export class OpenAIClient implements LLMClient {
@@ -24,6 +26,7 @@ export class OpenAIClient implements LLMClient {
   private compressionModel?: string;
   private compressionThreshold: number;
   private maxAllowedPercentage: number;
+  private manualContextWindow?: number;
   private compressors: Map<string, MessageCompressor>;
 
   constructor(options: OpenAIClientOptions) {
@@ -34,6 +37,7 @@ export class OpenAIClient implements LLMClient {
     this.compressionModel = options.compressionModel;
     this.compressionThreshold = options.compressionThreshold ?? 0.5;
     this.maxAllowedPercentage = options.maxAllowedPercentage ?? 0.9;
+    this.manualContextWindow = options.contextWindow;
     this.compressors = new Map();
   }
 
@@ -46,9 +50,18 @@ export class OpenAIClient implements LLMClient {
     }
 
     if (!this.compressors.has(model)) {
-      // Get model context window from model info cache
-      const modelInfo = globalModelCache.getModelInfo(model);
-      const contextWindow = modelInfo?.contextWindow ?? globalModelCache.getContextWindow(model);
+      // Use manual context window if specified, otherwise auto-detect
+      let contextWindow: number;
+
+      if (this.manualContextWindow) {
+        contextWindow = this.manualContextWindow;
+        console.log(`[OpenAIClient] Using manual context window: ${contextWindow} tokens`);
+      } else {
+        // Get model context window from model info cache
+        const modelInfo = globalModelCache.getModelInfo(model);
+        contextWindow = modelInfo?.contextWindow ?? globalModelCache.getContextWindow(model);
+        console.log(`[OpenAIClient] Auto-detected context window for ${model}: ${contextWindow} tokens`);
+      }
 
       if (contextWindow <= 0) {
         console.warn(`[OpenAIClient] Could not determine context window for model ${model}, compression disabled`);

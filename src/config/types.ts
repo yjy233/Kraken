@@ -66,6 +66,9 @@ export interface CompressionConfig {
 
   /** Maximum allowed percentage after compression (0.9 = 90%) */
   maxAllowedPercentage: number;
+
+  /** Manually specified context window size (null = auto-detect from model info) */
+  contextWindow: number | null;
 }
 
 /**
@@ -385,7 +388,8 @@ export const DEFAULT_CONFIG: KrakenConfig = {
       enabled: true,
       model: null,
       threshold: 0.5,
-      maxAllowedPercentage: 0.9
+      maxAllowedPercentage: 0.9,
+      contextWindow: null
     }
   },
 
