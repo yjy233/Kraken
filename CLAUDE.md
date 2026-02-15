@@ -33,6 +33,16 @@ npm start
 - Orchestrates LLM calls, tool execution, and session management
 - Maximum iterations controlled by `REACT_MAX_STEPS` (default: 6)
 - Emits events to MessageBus for real-time communication
+- Enhanced system prompt encourages task decomposition and strategic tool use
+- Supports custom system prompts via `options.systemPrompt`
+
+**Agent Prompts (`src/core/agent/prompts/`)**
+- Comprehensive system prompt that guides agent reasoning and behavior
+- Encourages use of `write_todo` tool for complex multi-step tasks
+- Promotes structured thinking: Reason → Act → Observe → Repeat
+- Includes tool usage guidelines and task decomposition protocols
+- Customizable via `buildCustomSystemPrompt()` helper
+- See `src/core/agent/prompts/README.md` for customization guide
 
 **MessageBus (`src/core/messagebus/MessageBus.ts`)**
 - Event-based communication system using Node.js EventEmitter
@@ -54,8 +64,11 @@ npm start
 
 **Tool Registry (`src/core/tools/ToolRegistry.ts`)**
 - Simple map-based registry of available tools
-- Builtin tools in `src/core/tools/builtin.ts`: `read_file`, `write_todo`, `web_fetch`, `browser`, `web_search`
+- Builtin tools in `src/core/tools/core_tool/`: `read_file`, `write_file`, `write_todo`, `grep`, `glob`, `bash`, `web_fetch`, `browser`, `web_search`
 - Tools receive `ToolContext` containing `sandbox`, `sessionId`, and `logger`
+- File tools: `read_file`, `write_file`, `grep` (search in files), `glob` (find files by pattern)
+- System tools: `bash` (execute shell commands)
+- Network tools require `ALLOW_NETWORK=true`: `web_fetch`, `browser`, `web_search`
 
 **LLM Client (`src/core/llm/OpenAIClient.ts`)**
 - Thin wrapper around OpenAI-compatible chat completion API
@@ -67,11 +80,16 @@ npm start
 ### Modes
 
 **CLI Mode (`src/cli/`)**
-- Interactive readline interface
+- Interactive readline interface with beautiful UI
+- Colorful card-style message boxes for all outputs
+- Tool calls displayed in yellow cards with formatted input
+- Tool results shown in green (success) or red (error) cards
+- Thinking process displayed in cyan cards
 - Creates MessageBus and subscribes to agent events
 - Displays thinking process, tool calls, and results in real-time
 - Single session ID: "cli"
 - Factory function `createCLI()` for easy instantiation
+- UI utilities in `src/cli/ui.ts` with ANSI colors and box drawing
 
 ## Configuration
 
@@ -101,10 +119,10 @@ All configuration via environment variables (see `.env` or shell exports):
 
 ## Adding New Tools
 
-1. Define tool in `src/core/tools/builtin.ts` following the `ToolDefinition` interface
+1. Create a new tool file in `src/core/tools/core_tool/` following the `ToolDefinition` interface
 2. Tool receives typed `input` and `context` (sandbox, sessionId, logger)
 3. Return `ToolResult` with `ok: boolean` and `content: string`
-4. Add to array returned by `createBuiltinTools()`
+4. Export from `src/core/tools/core_tool/index.ts` and add to the tool registry
 
 ## Key Patterns
 

@@ -4,11 +4,13 @@ import type { SessionStore } from "../session/SessionStore";
 import type { Sandbox } from "../sandbox/Sandbox";
 import type { Logger } from "../utils/logger";
 import type { MessageBus } from "../messagebus";
+import { SYSTEM_PROMPT } from "./prompts";
 
 export interface ReActAgentOptions {
   model: string;
   maxIterations?: number;
   temperature?: number;
+  systemPrompt?: string; // Allow custom system prompt
 }
 
 export class ReActAgent {
@@ -144,10 +146,7 @@ export class ReActAgent {
   private buildMessages(sessionId: string): ChatMessage[] {
     const systemMessage: ChatMessage = {
       role: "system",
-      content:
-        "You are an AI assistant. " +
-        "Use the available tools to help answer user questions. " +
-        "Call tools when needed to gather information or perform actions."
+      content: this.options.systemPrompt ?? SYSTEM_PROMPT
     };
 
     return [systemMessage, ...this.sessions.get(sessionId)];
