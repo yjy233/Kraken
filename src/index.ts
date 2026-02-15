@@ -12,7 +12,7 @@ async function main() {
       "Missing API key. Set LLM_API_KEY or OPENAI_API_KEY, or add apiKey to ~/.Kraken/Kraken.json or ./.Kraken/Kraken.json."
     );
   }
-  const cli = createCLI({
+  const cli = await createCLI({
     protocol: config.protocol,
     apiKey: config.apiKey,
     model: config.model,
@@ -28,7 +28,8 @@ async function main() {
     summaryTargetTokens: config.summaryTargetTokens,
     maxIterations: config.maxIterations,
     temperature: config.temperature,
-    logLevel: config.logLevel
+    logLevel: config.logLevel,
+    mcpServers: config.mcpServers
   });
 
   await cli.start();

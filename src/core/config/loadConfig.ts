@@ -2,6 +2,7 @@ import fs from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
 import type { LLMProtocol } from "../llm/LLMClientFactory";
+import type { MCPServerConfig } from "../mcp/types";
 
 
 export interface KrakenConfig {
@@ -21,6 +22,7 @@ export interface KrakenConfig {
   maxIterations?: number;
   temperature?: number;
   logLevel?: string;
+  mcpServers?: MCPServerConfig[];
 }
 
 interface JsonObject {
@@ -113,6 +115,30 @@ function normalizeConfig(obj: JsonObject): KrakenConfig {
   if (typeof obj.maxIterations === "number") config.maxIterations = obj.maxIterations;
   if (typeof obj.temperature === "number") config.temperature = obj.temperature;
   if (typeof obj.logLevel === "string") config.logLevel = obj.logLevel;
+
+  // Parse MCP configuration
+  if (obj.mcp && typeof obj.mcp === "object" && !Array.isArray(obj.mcp)) {
+    const mcpObj = obj.mcp as JsonObject;
+    if (mcpObj.enabled === true && Array.isArray(mcpObj.servers)) {
+      config.mcpServers = mcpObj.servers
+        .filter((s): s is JsonObject => typeof s === "object" && s !== null && !Array.isArray(s))
+        .filter((s) => s.enabled === true)
+        .map((s) => ({
+          name: String(s.name || "unnamed"),
+          description: s.description ? String(s.description) : undefined,
+          transport: String(s.transport || "stdio") as "stdio" | "sse",
+          command: s.command ? String(s.command) : undefined,
+          args: Array.isArray(s.args) ? s.args.map(String) : undefined,
+          env: s.env && typeof s.env === "object" && !Array.isArray(s.env)
+            ? Object.fromEntries(
+                Object.entries(s.env as Record<string, unknown>).map(([k, v]) => [k, String(v)])
+              )
+            : undefined,
+          url: s.url ? String(s.url) : undefined,
+          enabled: true
+        }));
+    }
+  }
 
   return config;
 }

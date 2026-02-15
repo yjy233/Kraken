@@ -9,6 +9,9 @@ import { ToolRegistry } from "../core/tools/ToolRegistry";
 import { ReActAgent } from "../core/agent/ReActAgent";
 import { createLogger } from "../core/utils/logger";
 import { CLI } from "./CLI";
+import { MCPManager } from "../core/mcp/MCPManager";
+import { convertAllMCPTools } from "../core/mcp/adapter";
+import type { MCPServerConfig } from "../core/mcp/types";
 
 export interface CLIConfig {
   protocol?: LLMProtocol;
@@ -27,9 +30,10 @@ export interface CLIConfig {
   maxIterations?: number;
   temperature?: number;
   logLevel?: string;
+  mcpServers?: MCPServerConfig[];
 }
 
-export function createCLI(config: CLIConfig): CLI {
+export async function createCLI(config: CLIConfig): Promise<CLI> {
   const logger = createLogger((config.logLevel as any) ?? "info");
   const messageBus = new MessageBus();
 
@@ -69,11 +73,31 @@ export function createCLI(config: CLIConfig): CLI {
     llm
   );
 
-  const tools = new ToolRegistry(createBuiltinTools());
+  // Load builtin tools
+  const tools = createBuiltinTools();
+
+  // Load MCP tools if configured
+  let mcpManager: MCPManager | undefined;
+  if (config.mcpServers && config.mcpServers.length > 0) {
+    try {
+      logger.info("Initializing MCP servers...");
+      mcpManager = new MCPManager(config.mcpServers);
+      await mcpManager.connectAll();
+
+      // Add MCP tools to the registry
+      const mcpTools = mcpManager.getAllTools();
+      tools.push(...mcpTools);
+      logger.info(`Loaded ${mcpTools.length} MCP tools`);
+    } catch (error) {
+      logger.error(`Failed to initialize MCP: ${error}`);
+    }
+  }
+
+  const toolRegistry = new ToolRegistry(tools);
 
   const agent = new ReActAgent({
     llm,
-    tools,
+    tools: toolRegistry,
     sessions,
     sandbox,
     logger,
@@ -85,5 +109,14 @@ export function createCLI(config: CLIConfig): CLI {
     messageBus
   });
 
-  return new CLI({ messageBus, agent });
+  const cli = new CLI({ messageBus, agent });
+
+  // Cleanup MCP connections on exit
+  if (mcpManager) {
+    process.on("exit", () => {
+      mcpManager?.disconnectAll().catch(console.error);
+    });
+  }
+
+  return cli;
 }

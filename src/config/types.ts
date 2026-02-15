@@ -30,6 +30,11 @@ export type WebSearchProvider = "custom" | "google" | "bing" | "duckduckgo";
 export type LLMProvider = "openai" | "azure" | "volcengine-ark" | "anthropic";
 
 /**
+ * MCP transport types
+ */
+export type MCPTransport = "stdio" | "sse";
+
+/**
  * Model info source types
  */
 export type ModelInfoSourceType = "github" | "ark" | "custom";
@@ -183,6 +188,46 @@ export interface WebSearchToolConfig {
 
   /** Maximum number of search results */
   maxResults: number;
+}
+
+/**
+ * MCP Server configuration
+ */
+export interface MCPServerConfig {
+  /** Server name/identifier */
+  name: string;
+
+  /** Server description */
+  description?: string;
+
+  /** Transport type */
+  transport: MCPTransport;
+
+  /** Command to start the server (for stdio) */
+  command?: string;
+
+  /** Arguments for the command (for stdio) */
+  args?: string[];
+
+  /** Environment variables */
+  env?: Record<string, string>;
+
+  /** Server URL (for SSE) */
+  url?: string;
+
+  /** Enable this server */
+  enabled: boolean;
+}
+
+/**
+ * MCP configuration
+ */
+export interface MCPConfig {
+  /** Enable MCP integration */
+  enabled: boolean;
+
+  /** MCP servers */
+  servers: MCPServerConfig[];
 }
 
 /**
@@ -348,6 +393,9 @@ export interface KrakenConfig {
   /** Tool settings */
   tools: ToolsConfig;
 
+  /** MCP (Model Context Protocol) settings */
+  mcp: MCPConfig;
+
   /** Model information cache settings */
   modelInfo: ModelInfoConfig;
 
@@ -428,6 +476,11 @@ export const DEFAULT_CONFIG: KrakenConfig = {
       apiKey: "${WEB_SEARCH_API_KEY}",
       maxResults: 10
     }
+  },
+
+  mcp: {
+    enabled: false,
+    servers: []
   },
 
   modelInfo: {
