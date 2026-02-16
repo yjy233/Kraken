@@ -1,12 +1,68 @@
 {
-  "protocol": "",
+  "protocol": "openai",
   "model": "",
   "summaryModel": "",
   "baseUrl": "",
+  "maxIterations": 36,
+  "contextWindow": 128000,
+  "workspaceRoot": "~/.kraken",
   "compression": {
     "enabled": true,
     "model": "",
     "threshold": 0.5,
     "maxAllowedPercentage": 0.9
+  },
+  "mcp": {
+    "enabled": false,
+    "servers": [
+      {
+        "name": "filesystem",
+        "description": "文件系统操作 - 读写本地文件 (stdio)",
+        "transport": "stdio",
+        "command": "npx",
+        "args": ["-y", "@modelcontextprotocol/server-filesystem", "~/code"],
+        "enabled": false
+      },
+      {
+        "name": "brave-search",
+        "description": "Brave 网络搜索 (stdio)",
+        "transport": "stdio",
+        "command": "npx",
+        "args": ["-y", "@modelcontextprotocol/server-brave-search"],
+        "env": {
+          "BRAVE_API_KEY": "${BRAVE_API_KEY}"
+        },
+        "enabled": false
+      },
+      {
+        "name": "sqlite",
+        "description": "SQLite 数据库查询 (stdio)",
+        "transport": "stdio",
+        "command": "npx",
+        "args": ["-y", "@modelcontextprotocol/server-sqlite", "~/data.db"],
+        "enabled": false
+      },
+      {
+        "name": "remote-api",
+        "description": "远程 MCP API 服务 (SSE/HTTP)",
+        "transport": "sse",
+        "url": "https://api.example.com/mcp",
+        "env": {
+          "API_KEY": "your-api-key-here"
+        },
+        "enabled": false
+      },
+      {
+        "name": "custom-tools",
+        "description": "自定义工具服务器 (SSE/HTTP Stream)",
+        "transport": "sse",
+        "url": "http://localhost:3000/mcp",
+        "env": {
+          "API_KEY": "${CUSTOM_MCP_API_KEY}",
+          "HEADER_X-Custom-Header": "custom-value"
+        },
+        "enabled": false
+      }
+    ]
   }
 }
