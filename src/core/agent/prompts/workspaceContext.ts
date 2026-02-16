@@ -54,7 +54,7 @@ export async function buildWorkspaceContext(options: WorkspaceContextOptions): P
     // If we can't read the directory, return basic info
     return `## Workspace Information
 
-**Working Directory**: \`${workspaceRoot}\`
+**Working Directory/工作目录/workspace**: \`${workspaceRoot}\`
 
 (Unable to read directory contents: ${error instanceof Error ? error.message : String(error)})`;
   }

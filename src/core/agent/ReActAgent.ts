@@ -265,7 +265,7 @@ After activation, you can use the skill's resources to help the user.
     // Add workspace context as a system message if available
     if (this.workspaceContextCache) {
       messages.push({
-        role: "system",
+        role: "user",
         content: this.workspaceContextCache
       });
     }
@@ -273,7 +273,7 @@ After activation, you can use the skill's resources to help the user.
     // Add skills prompt if skills are available
     if (this.skillsPrompt) {
       messages.push({
-        role: "system",
+        role: "user",
         content: this.skillsPrompt
       });
     }
