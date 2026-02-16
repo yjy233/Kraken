@@ -89,3 +89,18 @@ The project uses a MessageBus pattern for decoupled communication:
   - /exit - 退出程序
   - /save <file> - 保存对话
   - /model <name> - 切换模型
+
+## vscode生成vsix 文件
+```
+rm -rf ~/.vscode/extensions/kraken.kraken-ai-assistant-v3-0.1.0
+rm -rf ~/.vscode/extensions/kraken*
+rm -rf ~/Library/Caches/com.microsoft.VSCode*
+
+npm run build:vscode
+npm run package:vscode
+
+code --install-extension kraken.vsix   
+
+rm -rf ~/.vscode/extensions/kraken.kraken-ai-assistant* && echo "✅
+      旧扩展已删除"
+```
