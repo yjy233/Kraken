@@ -131,6 +131,8 @@ function normalizeConfig(obj: JsonObject): KrakenConfig {
     config.protocol = obj.protocol as LLMProtocol;
   }
   if (typeof obj.apiKey === "string") config.apiKey = obj.apiKey;
+  // 兼容旧字段名
+  if (!config.apiKey && typeof obj.openAIApiKey === "string") config.apiKey = obj.openAIApiKey;
   if (typeof obj.model === "string") config.model = obj.model;
   if (typeof obj.summaryModel === "string") config.summaryModel = obj.summaryModel;
   if (typeof obj.baseUrl === "string") config.baseUrl = obj.baseUrl;
@@ -230,16 +232,70 @@ export async function loadKrakenConfig(cwd: string = process.cwd()): Promise<Kra
   const workspacePath = path.join(cwd, ".Kraken", "Kraken.json");
 
   const homeRaw = await readJsonFile(homePath);
+  
   const workspaceRaw = await readJsonFile(workspacePath);
 
   const homeConfig = homeRaw ? normalizeConfig(homeRaw) : {};
   const workspaceConfig = workspaceRaw ? normalizeConfig(workspaceRaw) : {};
+  
+  if (homeConfig.lark) {
+  }
 
-  const merged: KrakenConfig = {
-    ...envConfig,
-    ...homeConfig,
-    ...workspaceConfig
+  // 配置优先级（高优先级覆盖低优先级）：
+  // 1. 当前目录 ./.Kraken/Kraken.json (最高优先级)
+  // 2. 环境变量
+  // 3. 用户目录 ~/.Kraken/Kraken.json (最低优先级)
+  // 
+  // 注意：对于嵌套对象（如 lark, tools），需要深度合并而不是简单覆盖
+  // 辅助函数：合并非空值（undefined 和空字符串都视为空）
+  const isEmptyValue = (value: any): boolean => {
+    return value === undefined || value === null || value === "";
   };
+  
+  const mergeNested = <T>(base?: T, env?: T, override?: T): T | undefined => {
+    const result = { ...base } as Record<string, any>;
+    if (env) {
+      Object.entries(env).forEach(([key, value]) => {
+        if (!isEmptyValue(value)) result[key] = value;
+      });
+    }
+    if (override) {
+      Object.entries(override).forEach(([key, value]) => {
+        if (!isEmptyValue(value)) result[key] = value;
+      });
+    }
+    return Object.keys(result).length > 0 ? (result as T) : undefined;
+  };
+  
+  // 提取嵌套配置，避免展开操作符覆盖它们
+  const { lark: homeLark, tools: homeTools, ...homeRest } = homeConfig;
+  const { lark: envLark, tools: envTools, ...envRest } = envConfig;
+  const { lark: workspaceLark, tools: workspaceTools, ...workspaceRest } = workspaceConfig;
+  
+  // 合并非嵌套的基本字段（只合并非空值）
+  const mergeBasicFields = () => {
+    const result = {} as Record<string, any>;
+    
+    // 按优先级顺序合并：用户级 -> 环境变量 -> 工作区级
+    [homeRest, envRest, workspaceRest].forEach((config) => {
+      Object.entries(config).forEach(([key, value]) => {
+        if (!isEmptyValue(value)) {
+          result[key] = value;
+        }
+      });
+    });
+    
+    return result;
+  };
+  
+  const merged: KrakenConfig = {
+    ...mergeBasicFields(),
+    // 深度合并 lark 配置（只合并非空值）
+    lark: mergeNested(homeLark, envLark, workspaceLark),
+    // 深度合并 tools 配置
+    tools: mergeNested(homeTools, envTools, workspaceTools)
+  };
+  
 
   merged.workspaceRoot = merged.workspaceRoot ?? cwd;
 

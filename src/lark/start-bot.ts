@@ -74,11 +74,26 @@ function isMessageProcessed(messageId: string): boolean {
 }
 
 async function main() {
-  const config = await loadKrakenConfig(process.cwd());
+  const cwd = process.cwd();
+  console.log(`📁 工作目录: ${cwd}`);
+  console.log(`📁 用户目录: ${require("os").homedir()}`);
+  
+  const config = await loadKrakenConfig(cwd);
+  
+  console.log("\n⚙️  配置加载情况:");
+  console.log(`  - LLM Provider: ${config.protocol || "未设置"}`);
+  console.log(`  - Model: ${config.model || "未设置"}`);
+  console.log(`  - Workspace: ${config.workspaceRoot || "未设置"}`);
+  console.log(`  - Lark Enabled: ${config.lark?.enabled ?? "未设置"}`);
+  console.log(`  - Lark App ID: ${config.lark?.appId ? "已设置" : "未设置"}`);
+  console.log(`  - Lark App Secret: ${config.lark?.appSecret ? "已设置" : "未设置"}`);
+  console.log("");
+  
   const larkConfig = config.lark;
 
   if (!larkConfig?.enabled) {
     console.error("❌ 飞书机器人未启用");
+    console.error("请检查 ~/.Kraken/Kraken.json 或 ./.Kraken/Kraken.json 中的 lark.enabled");
     process.exit(1);
   }
 
@@ -87,6 +102,8 @@ async function main() {
 
   if (!appId || !appSecret) {
     console.error("❌ 缺少 App ID 或 App Secret");
+    console.error("配置优先级: ./.Kraken/Kraken.json > 环境变量 > ~/.Kraken/Kraken.json");
+    console.error("请检查上述配置文件中的 lark.appId 和 lark.appSecret");
     process.exit(1);
   }
 
