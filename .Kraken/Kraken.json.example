@@ -1,18 +1,18 @@
 {
   "protocol": "openai",
-  "model": "ep-20260216225201-zj8mm",
+  "model": "",
   "summaryModel": "",
-  "baseUrl": "https://ark.cn-beijing.volces.com/api/v3",
-  "openAIApiKey": "e59b6575-0f0c-4cf1-b96f-6b7e9e2aed69",
+  "baseUrl": "",
+  "openAIApiKey": "",
   "maxIterations": 36,
   "contextWindow": 128000,
-  "workspaceRoot": "/Users/bill/.kraken",
+  "workspaceRoot": "",
   "allowNetwork": true,
   "maxToken": 64000,
   "compression": {
     "enabled": true, 
     "contextWindow": 128000,
-    "model": "ep-20260216225201-zj8mm",
+    "model": "",
     "threshold": 0.5,
     "maxAllowedPercentage": 0.9
   },
@@ -31,8 +31,8 @@
   },
   "lark": {
     "enabled": true,
-    "appId": "cli_a919b6d780b8dbcd",
-    "appSecret": "WJCkTDLhjkDHi01ovGo4adMGd6MzU6Vg",
+    "appId": "",
+    "appSecret": "",
     "debug": false,
     "autoReplyOnMention": true,
     "botKeywords": ["kraken", "机器人"],
@@ -40,6 +40,11 @@
     "systemPrompt": null
   },
   "tools": {
-    "enabled": true
+    "enabled": true,
+    "tavily": {
+      "enabled": true,
+      "allowNetwork": true,
+      "apiKey": ""
+    }
   }
 }
