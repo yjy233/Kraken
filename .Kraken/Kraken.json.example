@@ -1,0 +1,45 @@
+{
+  "protocol": "openai",
+  "model": "ep-20260216225201-zj8mm",
+  "summaryModel": "",
+  "baseUrl": "https://ark.cn-beijing.volces.com/api/v3",
+  "openAIApiKey": "e59b6575-0f0c-4cf1-b96f-6b7e9e2aed69",
+  "maxIterations": 36,
+  "contextWindow": 128000,
+  "workspaceRoot": "/Users/bill/.kraken",
+  "allowNetwork": true,
+  "maxToken": 64000,
+  "compression": {
+    "enabled": true, 
+    "contextWindow": 128000,
+    "model": "ep-20260216225201-zj8mm",
+    "threshold": 0.5,
+    "maxAllowedPercentage": 0.9
+  },
+  "mcp": {
+    "enabled": false,
+    "servers": [
+      {
+        "name": "filesystem",
+        "description": "文件系统操作 - 读写本地文件 (stdio)",
+        "transport": "stdio",
+        "command": "npx",
+        "args": ["-y", "@modelcontextprotocol/server-filesystem", "~/code"],
+        "enabled": false
+      }
+    ]
+  },
+  "lark": {
+    "enabled": true,
+    "appId": "cli_a919b6d780b8dbcd",
+    "appSecret": "WJCkTDLhjkDHi01ovGo4adMGd6MzU6Vg",
+    "debug": false,
+    "autoReplyOnMention": true,
+    "botKeywords": ["kraken", "机器人"],
+    "welcomeMessage": "你好！我是 Kraken AI 助手",
+    "systemPrompt": null
+  },
+  "tools": {
+    "enabled": true
+  }
+}

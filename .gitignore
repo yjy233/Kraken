@@ -11,6 +11,7 @@ yarn-error.log*
 pnpm-debug.log*
 
 # env files
+.env
 .env.*
 
 # editor
@@ -26,7 +27,10 @@ coverage/
 
 # misc
 *.tsbuildinfo
-.package.json
-.env
-.Kraken
+
+# Kraken config (except template)
+.Kraken/Kraken.json
 .skills
+
+# Session data
+.Kraken/sessions/
