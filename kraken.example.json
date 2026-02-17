@@ -1,0 +1,474 @@
+{
+  "// ============================================": "KRAKEN 完整配置示例",
+  "// 说明": "复制此文件为 Kraken.json 并修改配置值",
+  "// 位置": "~/.Kraken/Kraken.json 或 ./.Kraken/Kraken.json",
+  "// ============================================": "",
+
+  
+  "// ============================================": "1. LLM 基础配置",
+  "// ============================================": "",
+  
+  "// protocol": "LLM 提供商类型",
+  "// 可选值": "openai | azure | volcengine-ark | anthropic",
+  "// 说明": "决定使用哪个 LLM API",
+  "protocol": "openai",
+  
+  "// apiKey": "API 密钥",
+  "// 格式": "string 或 ${ENV_VAR} 环境变量语法",
+  "// 说明": "LLM 服务的 API Key",
+  "// 安全提示": "建议使用环境变量: ${OPENAI_API_KEY}",
+  "apiKey": "${OPENAI_API_KEY}",
+  
+  "// model": "主模型名称",
+  "// 示例": "gpt-4o | gpt-4o-mini | claude-3-opus-20240229 | ep-xxxxxx",
+  "// 说明": "用于对话的主要模型",
+  "model": "gpt-4o-mini",
+  
+  "// summaryModel": "摘要模型名称",
+  "// 说明": "用于会话压缩的模型，null 则使用主模型",
+  "// 建议": "使用更便宜的模型如 gpt-4o-mini 来节省成本",
+  "summaryModel": null,
+  
+  "// baseUrl": "API 基础地址",
+  "// OpenAI": "https://api.openai.com/v1",
+  "// Claude": "https://api.anthropic.com",
+  "// 火山": "https://ark.cn-beijing.volces.com/api/v3",
+  "// 本地": "http://localhost:8000/v1",
+  "baseUrl": "https://api.openai.com/v1",
+  
+  "// anthropicVersion": "Claude API 版本",
+  "// 说明": "仅在使用 anthropic provider 时需要",
+  "// 可选": "2023-06-01",
+  "anthropicVersion": "2023-06-01",
+  
+  "// timeoutMs": "API 请求超时时间",
+  "// 单位": "毫秒",
+  "// 默认": "60000 (1分钟)",
+  "timeoutMs": 60000,
+  
+  "// maxRetries": "失败重试次数",
+  "// 说明": "API 请求失败时的最大重试次数",
+  "// 默认": 3,
+  "maxRetries": 3,
+
+
+  "// ============================================": "2. Agent 配置",
+  "// ============================================": "",
+  
+  "// maxIterations": "最大 ReAct 循环次数",
+  "// 范围": "1-20",
+  "// 说明": "Agent 思考-行动-观察的最大循环次数",
+  "// 建议": "复杂任务设 10-15，简单任务设 3-5",
+  "maxIterations": 6,
+  
+  "// temperature": "模型温度参数",
+  "// 范围": "0.0-2.0",
+  "// 说明": "值越低回答越确定，值越高越有创造性",
+  "// 建议": "代码任务 0.1-0.3，创意任务 0.7-1.0",
+  "temperature": 0.2,
+  
+  "// systemPrompt": "自定义系统提示词",
+  "// 说明": "覆盖默认的 ReAct 系统提示",
+  "// null": "使用默认提示词",
+  "systemPrompt": null,
+
+
+  "// ============================================": "3. 会话管理配置",
+  "// ============================================": "",
+  
+  "// maxSessionTokens": "会话最大 Token 数",
+  "// 说明": "超过此值触发会话压缩",
+  "// 建议": "根据模型上下文窗口设置",
+  "maxSessionTokens": 4000,
+  
+  "// summaryTargetTokens": "压缩后目标 Token 数",
+  "// 说明": "会话压缩后的目标长度",
+  "summaryTargetTokens": 600,
+  
+  "// compressionTargetTokens": "同 summaryTargetTokens",
+  "// 说明": "兼容性配置，推荐使用 summaryTargetTokens",
+  "compressionTargetTokens": 600,
+  
+  "// contextWindow": "模型上下文窗口大小",
+  "// 说明": "手动指定模型支持的 token 数",
+  "// null": "自动从模型信息获取",
+  "contextWindow": null,
+  
+  "// compression": "消息压缩详细配置",
+  "compression": {
+    "// enabled": "是否启用自动压缩",
+    "enabled": true,
+    
+    "// model": "压缩使用的模型",
+    "// null": "使用 summaryModel 或主模型",
+    "model": null,
+    
+    "// threshold": "压缩触发阈值",
+    "// 说明": "当消息超过此比例时触发压缩",
+    "// 示例": "0.5 = 50% 的上下文窗口",
+    "threshold": 0.5,
+    
+    "// maxAllowedPercentage": "压缩后最大比例",
+    "// 说明": "确保压缩后不超过此比例",
+    "maxAllowedPercentage": 0.9,
+    
+    "// contextWindow": "压缩参考的上下文窗口",
+    "// null": "使用全局 contextWindow 或自动检测",
+    "contextWindow": null
+  },
+
+
+  "// ============================================": "4. Sandbox 沙箱配置",
+  "// ============================================": "",
+  
+  "// workspaceRoot": "工作区根目录",
+  "// 说明": "AI 操作文件的默认目录",
+  "// 建议": "项目根目录或专用工作目录",
+  "// 变量": "支持 ${HOME} ${CWD} 等变量",
+  "workspaceRoot": "${CWD}",
+  
+  "// sandboxRoot": "沙箱根目录",
+  "// 说明": "sandbox 功能的根目录",
+  "// null": "使用 workspaceRoot",
+  "sandboxRoot": null,
+  
+  "// sandboxAllowedDirs": "允许访问的目录列表",
+  "// 说明": "AI 可以读写的额外目录",
+  "// 安全": "限制 AI 的文件访问范围",
+  "sandboxAllowedDirs": [
+    "${CWD}",
+    "${HOME}/Documents"
+  ],
+  
+  "// sandboxMaxFileBytes": "最大文件大小",
+  "// 单位": "字节",
+  "// 默认": "1048576 (1MB)",
+  "sandboxMaxFileBytes": 1048576,
+  
+  "// allowSymlinks": "是否允许符号链接",
+  "// 安全": "false 更安全，防止跳出沙箱",
+  "allowSymlinks": false,
+
+
+  "// ============================================": "5. 工具配置",
+  "// ============================================": "",
+  
+  "// tools.enabled": "是否启用工具系统",
+  "// 说明": "总开关，关闭后 AI 无法调用工具",
+  "tools": {
+    "enabled": true
+  },
+  
+  "// allowNetwork": "是否允许网络工具",
+  "// 说明": "启用 web_search, web_fetch, browser 工具",
+  "allowNetwork": false,
+  
+  "// enabledTools": "启用的工具列表",
+  "// 说明": "空数组表示启用所有",
+  "// 可选工具": "read_file, write_file, edit_file, bash, grep, glob, list_directory, web_search, web_fetch, browser, write_todo",
+  "enabledTools": [],
+  
+  "// networkToolConfig": "网络工具配置",
+  "networkToolConfig": {
+    "// enabled": "网络工具总开关",
+    "enabled": false,
+    
+    "// allowedDomains": "允许访问的域名白名单",
+    "// 空数组": "允许所有域名",
+    "allowedDomains": [],
+    
+    "// timeout": "网络请求超时",
+    "// 单位": "毫秒",
+    "timeout": 30000
+  },
+  
+  "// bashToolConfig": "Bash 工具配置",
+  "bashToolConfig": {
+    "// enabled": "是否启用 bash 工具",
+    "enabled": true,
+    
+    "// defaultTimeout": "默认命令超时",
+    "defaultTimeout": 30000,
+    
+    "// maxTimeout": "最大允许超时",
+    "maxTimeout": 300000,
+    
+    "// shell": "使用的 shell",
+    "shell": "/bin/bash",
+    
+    "// allowedCommands": "允许的命令白名单",
+    "// 空数组": "允许所有命令",
+    "allowedCommands": [],
+    
+    "// blockedCommands": "禁止的危险命令",
+    "blockedCommands": [
+      "rm -rf /",
+      "dd if=/dev/zero",
+      ":(){ :|:& };:"
+    ]
+  },
+  
+  "// webSearchToolConfig": "网页搜索工具配置",
+  "webSearchToolConfig": {
+    "// provider": "搜索提供商",
+    "// 可选": "custom | google | bing | duckduckgo | tavily",
+    "provider": "tavily",
+    
+    "// endpoint": "搜索 API 端点",
+    "// 说明": "custom 提供商时使用",
+    "endpoint": "${WEB_SEARCH_ENDPOINT}",
+    
+    "// apiKey": "搜索服务 API Key",
+    "apiKey": "${WEB_SEARCH_API_KEY}",
+    
+    "// maxResults": "最大搜索结果数",
+    "maxResults": 10
+  },
+  
+  "// section5.1": "============================================",
+  "// title5.1": "Tavily 搜索配置（推荐）",
+  "// desc5.1": "Tavily 是专为 AI 优化的搜索引擎，提供结构化结果",
+  
+  "tools": {
+    "// enabled": "是否启用工具系统总开关",
+    "enabled": true,
+    
+    "// tavily": "Tavily 搜索工具配置",
+    "tavily": {
+      "// enabled": "是否启用 Tavily 搜索",
+      "// 说明": "设为 false 可禁用搜索功能",
+      "enabled": true,
+      
+      "// apiKey": "Tavily API Key",
+      "// 获取": "https://tavily.com → Sign Up → API Keys",
+      "// 格式": "tvly-xxxxxxxxxxxxxxxxxxxxxxxx",
+      "// 优先级": "1. 环境变量 TAVILY_API_KEY > 2. 此配置 > 3. 禁用",
+      "// 安全提示": "可使用环境变量语法: ${TAVILY_API_KEY}",
+      "apiKey": "${TAVILY_API_KEY}"
+    }
+  },
+
+
+  "// ============================================": "6. MCP 配置",
+  "// ============================================": "",
+  "// MCP": "Model Context Protocol 外部工具服务器",
+  
+  "mcp": {
+    "// enabled": "是否启用 MCP",
+    "enabled": false,
+    
+    "// servers": "MCP 服务器列表",
+    "servers": [
+      {
+        "// name": "服务器标识名称",
+        "name": "filesystem",
+        
+        "// description": "服务器描述",
+        "description": "文件系统操作",
+        
+        "// transport": "传输类型",
+        "// 可选": "stdio | sse",
+        "transport": "stdio",
+        
+        "// command": "启动命令",
+        "command": "npx",
+        
+        "// args": "命令参数",
+        "args": ["-y", "@modelcontextprotocol/server-filesystem", "/allowed/path"],
+        
+        "// env": "环境变量",
+        "env": {
+          "KEY": "value"
+        },
+        
+        "// enabled": "是否启用此服务器",
+        "enabled": false
+      },
+      {
+        "name": "sqlite",
+        "description": "SQLite 数据库访问",
+        "transport": "stdio",
+        "command": "npx",
+        "args": ["-y", "@modelcontextprotocol/server-sqlite", "/path/to/db.sqlite"],
+        "enabled": false
+      },
+      {
+        "name": "brave-search",
+        "description": "Brave 搜索",
+        "transport": "stdio",
+        "command": "npx",
+        "args": ["-y", "@modelcontextprotocol/server-brave-search"],
+        "env": {
+          "BRAVE_API_KEY": "${BRAVE_API_KEY}"
+        },
+        "enabled": false
+      },
+      {
+        "// SSE 传输示例": "",
+        "name": "remote-server",
+        "description": "远程 MCP 服务器",
+        "transport": "sse",
+        "url": "http://localhost:3000/sse",
+        "enabled": false
+      }
+    ]
+  },
+
+
+  "// ============================================": "7. 飞书 Lark 配置",
+  "// ============================================": "",
+  
+  "lark": {
+    "// enabled": "是否启用飞书机器人",
+    "enabled": false,
+    
+    "// appId": "飞书应用 ID",
+    "// 获取": "飞书开放平台 -> 应用凭证",
+    "// 格式": "cli_xxxxxxxx",
+    "appId": "${LARK_APP_ID}",
+    
+    "// appSecret": "飞书应用密钥",
+    "// 安全": "建议使用环境变量",
+    "appSecret": "${LARK_APP_SECRET}",
+    
+    "// debug": "是否启用调试日志",
+    "debug": false,
+    
+    "// autoReplyOnMention": "群聊中只回复 @机器人的消息",
+    "// 说明": "false 则回复所有群消息",
+    "autoReplyOnMention": true,
+    
+    "// botKeywords": "机器人关键词",
+    "// 说明": "用于检测群聊中的 @提及",
+    "botKeywords": ["kraken", "机器人", "助手"],
+    
+    "// welcomeMessage": "新用户欢迎消息",
+    "// null": "不发送欢迎消息",
+    "welcomeMessage": "你好！我是 Kraken AI 助手 🤖\n\n我可以帮你：\n• 编写和调试代码\n• 分析项目文件\n• 执行命令行操作\n\n输入 /help 查看帮助",
+    
+    "// systemPrompt": "飞书机器人的系统提示词",
+    "// null": "使用全局 systemPrompt",
+    "// 说明": "可针对飞书场景定制行为",
+    "systemPrompt": null,
+    
+    "// eventHandlersPath": "自定义事件处理器路径",
+    "// 说明": "JS/TS 文件路径，用于自定义消息处理",
+    "eventHandlersPath": null
+  },
+
+
+  "// ============================================": "8. 日志配置",
+  "// ============================================": "",
+  
+  "// logLevel": "日志级别",
+  "// 可选": "debug | info | warn | error",
+  "logLevel": "info",
+  
+  "// logFile": "日志文件路径",
+  "// null": "不写入文件，只输出到控制台",
+  "// 示例": "./logs/kraken.log",
+  "logFile": null,
+  
+  "// logConsole": "是否输出到控制台",
+  "logConsole": true,
+  
+  "// logStructured": "是否使用 JSON 结构化日志",
+  "logStructured": false,
+
+
+  "// ============================================": "9. 高级配置",
+  "// ============================================": "",
+  
+  "// advanced": "高级设置",
+  "advanced": {
+    "// tokenCountMethod": "Token 计算方法",
+    "// 可选": "approximate | tiktoken | gpt2",
+    "// 说明": "approximate 最快，tiktoken 最准",
+    "tokenCountMethod": "approximate",
+    
+    "// approximateTokenDivisor": "近似计算除数",
+    "// 说明": "字符长度除以该值估算 token",
+    "// 默认": 4,
+    "approximateTokenDivisor": 4,
+    
+    "// enableMessageBus": "启用消息总线",
+    "// 说明": "内部事件系统，影响性能监控",
+    "enableMessageBus": true,
+    
+    "// gracefulShutdownMs": "优雅关闭等待时间",
+    "// 单位": "毫秒",
+    "gracefulShutdownMs": 5000
+  },
+
+
+  "// ============================================": "10. 环境变量映射",
+  "// ============================================": "",
+  "// env": "环境变量与配置的映射关系",
+  "// 说明": "允许通过环境变量覆盖配置",
+  
+  "env": {
+    "// loadDotenv": "加载 .env 文件",
+    "loadDotenv": true,
+    
+    "// overrideWithEnv": "环境变量优先于配置文件",
+    "overrideWithEnv": true,
+    
+    "// mapping": "环境变量到配置路径的映射",
+    "mapping": {
+      "OPENAI_API_KEY": "llm.apiKey",
+      "OPENAI_MODEL": "agent.model",
+      "OPENAI_BASE_URL": "llm.baseUrl",
+      "LARK_APP_ID": "lark.appId",
+      "LARK_APP_SECRET": "lark.appSecret",
+      "LARK_ENABLED": "lark.enabled",
+      "TAVILY_API_KEY": "tools.tavily.apiKey",
+      "TAVILY_ENABLED": "tools.tavily.enabled"
+    }
+  },
+
+
+  "// ============================================": "11. 模型信息配置",
+  "// ============================================": "",
+  "// modelInfo": "模型信息缓存设置",
+  
+  "modelInfo": {
+    "// sources": "模型信息来源",
+    "sources": [
+      {
+        "// type": "来源类型",
+        "// 可选": "github | ark | custom",
+        "type": "github",
+        
+        "// url": "模型信息 JSON 地址",
+        "url": "https://raw.githubusercontent.com/BerriAI/litellm/main/model_prices_and_context_window.json",
+        
+        "// enabled": "是否启用此来源",
+        "enabled": true
+      },
+      {
+        "type": "ark",
+        "apiKey": "${ARK_API_KEY}",
+        "baseUrl": "https://ark.cn-beijing.volces.com",
+        "enabled": false
+      }
+    ],
+    
+    "// cacheExpiryMs": "缓存过期时间",
+    "// 单位": "毫秒",
+    "// 默认": "86400000 (24小时)",
+    "cacheExpiryMs": 86400000,
+    
+    "// autoUpdate": "自动更新缓存",
+    "autoUpdate": true
+  },
+
+
+  "// ============================================": "配置优先级说明",
+  "// ============================================": "",
+  "// 配置加载顺序（后面的覆盖前面的）": "",
+  "// 1. 默认配置": "",
+  "// 2. ~/.Kraken/Kraken.json": "用户全局配置",
+  "// 3. ./.Kraken/Kraken.json": "项目本地配置",
+  "// 4. 环境变量": "优先级最高",
+  "// ============================================": ""
+}
