@@ -1,0 +1,43 @@
+# VS Code Extension Ignore File
+# Files and directories to exclude from the extension package
+
+# Source files
+src/**
+*.ts
+tsconfig.json
+.gitignore
+
+# Development files
+.env
+.env.*
+*.md
+!README.md
+test_skills.ts
+1.md
+VSCODE_*.md
+docs/**
+
+# Build artifacts
+*.vsix
+
+# IDE
+.vscode/**
+.claude/**
+
+# Kraken specific
+.Kraken/**
+.skills/**
+
+# Dependencies - include only what we need
+node_modules/**
+!node_modules/@xterm/**
+!node_modules/xterm/**
+!node_modules/node-pty/**
+
+# Git
+.git/**
+.gitignore
+
+# Logs and temp files
+*.log
+*.tmp

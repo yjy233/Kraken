@@ -355,6 +355,38 @@ export interface AdvancedConfig {
 }
 
 /**
+ * Lark (Feishu) Bot configuration
+ */
+export interface LarkConfig {
+  /** Enable Lark bot */
+  enabled: boolean;
+
+  /** App ID */
+  appId: string;
+
+  /** App Secret (can use ${ENV_VAR} syntax) */
+  appSecret: string;
+
+  /** Enable debug logging */
+  debug: boolean;
+
+  /** Auto reply on mention in group chat */
+  autoReplyOnMention: boolean;
+
+  /** Bot name keywords for mention detection */
+  botKeywords: string[];
+
+  /** Welcome message when user starts chat */
+  welcomeMessage: string | null;
+
+  /** System prompt for LLM */
+  systemPrompt: string | null;
+
+  /** Custom event handlers (for advanced use) */
+  eventHandlersPath: string | null;
+}
+
+/**
  * Environment variable configuration
  */
 export interface EnvConfig {
@@ -410,6 +442,9 @@ export interface KrakenConfig {
 
   /** Environment variable settings */
   env: EnvConfig;
+
+  /** Lark (Feishu) Bot settings */
+  lark: LarkConfig;
 }
 
 /**
@@ -544,7 +579,21 @@ export const DEFAULT_CONFIG: KrakenConfig = {
       "WEB_SEARCH_ENDPOINT": "tools.webSearch.endpoint",
       "WEB_SEARCH_API_KEY": "tools.webSearch.apiKey",
       "ARK_API_KEY": "modelInfo.sources[1].apiKey",
-      "ARK_BASE_URL": "modelInfo.sources[1].baseUrl"
+      "ARK_BASE_URL": "modelInfo.sources[1].baseUrl",
+      "LARK_APP_ID": "lark.appId",
+      "LARK_APP_SECRET": "lark.appSecret"
     }
+  },
+
+  lark: {
+    enabled: false,
+    appId: "${LARK_APP_ID}",
+    appSecret: "${LARK_APP_SECRET}",
+    debug: false,
+    autoReplyOnMention: true,
+    botKeywords: ["kraken", "机器人"],
+    welcomeMessage: "你好！我是 Kraken AI 助手，有什么可以帮你的吗？",
+    systemPrompt: null,
+    eventHandlersPath: null
   }
 };

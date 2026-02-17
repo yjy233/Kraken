@@ -125,10 +125,13 @@ After activation, you can use the skill's resources to help the user.
     this.sessions.append(sessionId, { role: "user", content: input });
     await this.sessions.compressIfNeeded(sessionId);
 
+    // 构建初始消息（用于保存历史时包含 system、workspace、skills）
+    const initialMessages = await this.buildInitialMessages();
+
     const maxIterations = this.options.maxIterations ?? 6;
 
     for (let step = 0; step < maxIterations; step++) {
-      this.messageBus?.emit("agent:thinking", { content: `Step ${step + 1}/${maxIterations}` });
+      this.messageBus?.emit("agent:thinking", { content: `Step ${step + 1}/${maxIterations}`, sessionId });
 
       const messages = await this.buildMessages(sessionId);
       const toolDefinitions = this.buildToolDefinitions();
@@ -143,10 +146,10 @@ After activation, you can use the skill's resources to help the user.
       // If the model returns a text response (final answer)
       if (response.content && !response.tool_calls) {
         this.sessions.append(sessionId, { role: "assistant", content: response.content });
-        this.messageBus?.emit("agent:response", { content: response.content });
+        this.messageBus?.emit("agent:response", { content: response.content, sessionId });
 
-        // Save session history after each conversation turn
-        await this.sessions.saveHistory(sessionId);
+        // Save session history after each conversation turn (包含初始消息)
+        await this.sessions.saveHistory(sessionId, initialMessages);
 
         return response.content;
       }
@@ -167,7 +170,7 @@ After activation, you can use the skill's resources to help the user.
 
           if (!tool) {
             const errorMsg = `Unknown tool: ${toolName}`;
-            this.messageBus?.emit("agent:error", { error: errorMsg });
+            this.messageBus?.emit("agent:error", { error: errorMsg, sessionId });
             this.sessions.append(sessionId, {
               role: "tool",
               tool_call_id: toolCall.id,
@@ -181,7 +184,7 @@ After activation, you can use the skill's resources to help the user.
             toolInput = JSON.parse(toolCall.function.arguments);
           } catch (error) {
             const errorMsg = `Invalid tool arguments: ${(error as Error).message}`;
-            this.messageBus?.emit("agent:error", { error: errorMsg });
+            this.messageBus?.emit("agent:error", { error: errorMsg, sessionId });
             this.sessions.append(sessionId, {
               role: "tool",
               tool_call_id: toolCall.id,
@@ -190,7 +193,7 @@ After activation, you can use the skill's resources to help the user.
             continue;
           }
 
-          this.messageBus?.emit("agent:tool_call", { toolName, input: toolInput });
+          this.messageBus?.emit("agent:tool_call", { toolName, input: toolInput, sessionId });
 
           const result = await tool.run(toolInput, {
             sandbox: this.sandbox,
@@ -201,7 +204,8 @@ After activation, you can use the skill's resources to help the user.
           this.messageBus?.emit("agent:tool_result", {
             toolName,
             result: result.content,
-            ok: result.ok
+            ok: result.ok,
+            sessionId,
           });
 
           this.sessions.append(sessionId, {
@@ -211,8 +215,8 @@ After activation, you can use the skill's resources to help the user.
           });
         }
 
-        // Save history after tool calls complete (before next iteration)
-        await this.sessions.saveHistory(sessionId);
+        // Save history after tool calls complete (before next iteration, 包含初始消息)
+        await this.sessions.saveHistory(sessionId, initialMessages);
 
         await this.sessions.compressIfNeeded(sessionId);
         continue;
@@ -221,26 +225,30 @@ After activation, you can use the skill's resources to help the user.
       // No content and no tool calls - invalid response
       const error = "Invalid model response: no content or tool calls";
       this.sessions.append(sessionId, { role: "assistant", content: error });
-      this.messageBus?.emit("agent:error", { error });
+      this.messageBus?.emit("agent:error", { error, sessionId });
 
       console.log("save history`, message", messages);
-      // Save session history even on error
-      await this.sessions.saveHistory(sessionId);
+      // Save session history even on error (包含初始消息)
+      await this.sessions.saveHistory(sessionId, initialMessages);
 
       return error;
     }
 
     const fallback = "I could not finish within the step limit.";
     this.sessions.append(sessionId, { role: "assistant", content: fallback });
-    this.messageBus?.emit("agent:error", { error: fallback });
+    this.messageBus?.emit("agent:error", { error: fallback, sessionId });
 
-    // Save session history on iteration limit
-    await this.sessions.saveHistory(sessionId);
+    // Save session history on iteration limit (包含初始消息)
+    await this.sessions.saveHistory(sessionId, initialMessages);
 
     return fallback;
   }
 
-  private async buildMessages(sessionId: string): Promise<ChatMessage[]> {
+  /**
+   * 构建初始消息（system prompt、workspace context、skills）
+   * 这些消息在每个请求的开头，但不存储在 session 中
+   */
+  private async buildInitialMessages(): Promise<ChatMessage[]> {
     const systemMessage: ChatMessage = {
       role: "system",
       content: this.options.systemPrompt ?? SYSTEM_PROMPT
@@ -260,7 +268,7 @@ After activation, you can use the skill's resources to help the user.
       }
     }
 
-    const messages = [systemMessage];
+    const messages: ChatMessage[] = [systemMessage];
 
     // Add workspace context as a system message if available
     if (this.workspaceContextCache) {
@@ -278,10 +286,13 @@ After activation, you can use the skill's resources to help the user.
       });
     }
 
-    // Add session messages
-    messages.push(...this.sessions.get(sessionId));
-
     return messages;
+  }
+
+  private async buildMessages(sessionId: string): Promise<ChatMessage[]> {
+    const initialMessages = await this.buildInitialMessages();
+    const sessionMessages = this.sessions.get(sessionId);
+    return [...initialMessages, ...sessionMessages];
   }
 
   private buildToolDefinitions(): OpenAIToolDef[] {

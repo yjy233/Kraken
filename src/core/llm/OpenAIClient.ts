@@ -1,6 +1,5 @@
 import type { ChatCompletionRequest, ChatCompletionResponse, LLMClient } from "./types";
 import { MessageCompressor } from "./MessageCompressor";
-import { globalModelCache } from "./modelInfoFetcher";
 
 export interface OpenAIClientOptions {
   apiKey: string;
@@ -57,9 +56,7 @@ export class OpenAIClient implements LLMClient {
         contextWindow = this.manualContextWindow;
         console.log(`[OpenAIClient] Using manual context window: ${contextWindow} tokens`);
       } else {
-        // Get model context window from model info cache
-        const modelInfo = globalModelCache.getModelInfo(model);
-        contextWindow = modelInfo?.contextWindow ?? globalModelCache.getContextWindow(model);
+        contextWindow = 256000
         console.log(`[OpenAIClient] Auto-detected context window for ${model}: ${contextWindow} tokens`);
       }
 
@@ -86,9 +83,10 @@ export class OpenAIClient implements LLMClient {
 
   async chatCompletion(request: ChatCompletionRequest): Promise<ChatCompletionResponse> {
     let messages = request.messages;
-
+    
+    console.log(`${messages}`)
     // Compress messages if needed
-    if (this.enableCompression) {
+    if (this.enableCompression ) {
       const compressor = this.getCompressor(request.model);
       if (compressor) {
         const compressionResult = await compressor.compressIfNeeded(messages);

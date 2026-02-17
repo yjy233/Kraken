@@ -5,6 +5,18 @@ import type { LLMProtocol } from "../llm/LLMClientFactory";
 import type { MCPServerConfig } from "../mcp/types";
 
 
+export interface LarkConfig {
+  enabled?: boolean;
+  appId?: string;
+  appSecret?: string;
+  debug?: boolean;
+  autoReplyOnMention?: boolean;
+  botKeywords?: string[];
+  welcomeMessage?: string | null;
+  systemPrompt?: string | null;
+  eventHandlersPath?: string | null;
+}
+
 export interface KrakenConfig {
   protocol?: LLMProtocol;
   apiKey?: string;
@@ -23,6 +35,7 @@ export interface KrakenConfig {
   temperature?: number;
   logLevel?: string;
   mcpServers?: MCPServerConfig[];
+  lark?: LarkConfig;
 }
 
 interface JsonObject {
@@ -67,7 +80,13 @@ function loadEnvConfig(): KrakenConfig {
     summaryTargetTokens: parseNumber(process.env.SUMMARY_TARGET_TOKENS),
     maxIterations: parseNumber(process.env.REACT_MAX_STEPS),
     temperature: parseNumber(process.env.REACT_TEMPERATURE),
-    logLevel: process.env.LOG_LEVEL
+    logLevel: process.env.LOG_LEVEL,
+    lark: {
+      enabled: process.env.LARK_ENABLED === "true" || process.env.LARK_ENABLED === "1",
+      appId: process.env.LARK_APP_ID || process.env.APP_ID,
+      appSecret: process.env.LARK_APP_SECRET || process.env.APP_SECRET,
+      debug: process.env.LARK_DEBUG === "true" || process.env.LARK_DEBUG === "1"
+    }
   };
 }
 
@@ -138,6 +157,30 @@ function normalizeConfig(obj: JsonObject): KrakenConfig {
           enabled: true
         }));
     }
+  }
+
+  // Parse Lark configuration
+  if (obj.lark && typeof obj.lark === "object" && !Array.isArray(obj.lark)) {
+    const larkObj = obj.lark as JsonObject;
+    config.lark = {
+      enabled: larkObj.enabled === true,
+      appId: typeof larkObj.appId === "string" ? larkObj.appId : undefined,
+      appSecret: typeof larkObj.appSecret === "string" ? larkObj.appSecret : undefined,
+      debug: larkObj.debug === true,
+      autoReplyOnMention: larkObj.autoReplyOnMention !== false,
+      botKeywords: Array.isArray(larkObj.botKeywords)
+        ? larkObj.botKeywords.filter((k): k is string => typeof k === "string")
+        : undefined,
+      welcomeMessage: larkObj.welcomeMessage !== undefined
+        ? (larkObj.welcomeMessage === null ? null : String(larkObj.welcomeMessage))
+        : undefined,
+      systemPrompt: larkObj.systemPrompt !== undefined
+        ? (larkObj.systemPrompt === null ? null : String(larkObj.systemPrompt))
+        : undefined,
+      eventHandlersPath: larkObj.eventHandlersPath !== undefined
+        ? (larkObj.eventHandlersPath === null ? null : String(larkObj.eventHandlersPath))
+        : undefined
+    };
   }
 
   return config;

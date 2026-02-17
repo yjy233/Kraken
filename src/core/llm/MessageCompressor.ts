@@ -183,6 +183,8 @@ export class MessageCompressor {
   async compressIfNeeded(messages: ChatMessage[]): Promise<CompressionResult> {
     const originalTokens = this.calculateTokens(messages);
     const threshold = this.options.contextWindow * this.options.compressionThreshold;
+
+    console.log(`[MessageCompressor] Original messages: contextWindow ${this.options.contextWindow},   ${originalTokens} tokens (threshold: ${threshold} tokens)`);
     const maxAllowed = Math.floor(this.options.contextWindow * this.options.maxAllowedPercentage);
 
     let result: ChatMessage[] = messages;

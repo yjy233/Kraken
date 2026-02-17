@@ -1,11 +1,11 @@
 import { EventEmitter } from "node:events";
 
 export interface MessageBusEvents {
-  "agent:thinking": { content: string };
-  "agent:tool_call": { toolName: string; input: unknown };
-  "agent:tool_result": { toolName: string; result: string; ok: boolean };
-  "agent:response": { content: string };
-  "agent:error": { error: string };
+  "agent:thinking": { content: string; sessionId: string };
+  "agent:tool_call": { toolName: string; input: unknown; sessionId: string };
+  "agent:tool_result": { toolName: string; result: string; ok: boolean; sessionId: string };
+  "agent:response": { content: string; sessionId: string };
+  "agent:error": { error: string; sessionId: string };
   "system:log": { level: string; message: string; data?: unknown };
 }
 

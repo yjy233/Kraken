@@ -34,15 +34,21 @@ export class SessionStore {
   /**
    * Save session history to disk
    * Saves to workspace/.Kraken/sessions/:sessionId/history.json
+   * 
+   * @param sessionId - Session ID
+   * @param initialMessages - 初始消息（如 system prompt、workspace context、skills 等）
    */
-  async saveHistory(sessionId: string): Promise<void> {
+  async saveHistory(sessionId: string, initialMessages: ChatMessage[] = []): Promise<void> {
     if (!this.options.workspaceRoot) {
       return; // No workspace configured, skip saving
     }
 
-    const messages = this.get(sessionId);
+    // 合并初始消息和会话消息
+    const sessionMessages = this.get(sessionId);
+    const allMessages = [...initialMessages, ...sessionMessages];
+    
     try {
-      await saveSessionHistory(this.options.workspaceRoot, sessionId, messages);
+      await saveSessionHistory(this.options.workspaceRoot, sessionId, allMessages);
     } catch (error) {
       console.warn(`Failed to save session history for ${sessionId}:`, error);
     }

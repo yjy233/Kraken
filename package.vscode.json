@@ -1,0 +1,51 @@
+{
+  "name": "kraken-vscode",
+  "displayName": "Kraken Terminal",
+  "description": "Integrated terminal for Kraken AI Assistant",
+  "version": "0.1.0",
+  "engines": {
+    "vscode": "^1.80.0"
+  },
+  "categories": [
+    "Other"
+  ],
+  "activationEvents": [
+    "onStartupFinished"
+  ],
+  "main": "./dist/vscode/extension.js",
+  "contributes": {
+    "commands": [
+      {
+        "command": "kraken.openTerminal",
+        "title": "Kraken: Open Terminal",
+        "icon": "$(terminal)"
+      }
+    ],
+    "viewsContainers": {
+      "activitybar": [
+        {
+          "id": "kraken",
+          "title": "Kraken Terminal",
+          "icon": "$(terminal)"
+        }
+      ]
+    },
+    "views": {
+      "kraken": [
+        {
+          "type": "webview",
+          "id": "kraken.terminalView",
+          "name": "Terminal"
+        }
+      ]
+    }
+  },
+  "scripts": {
+    "vscode:prepublish": "npm run build",
+    "package": "vsce package"
+  },
+  "devDependencies": {
+    "@types/vscode": "^1.80.0",
+    "vsce": "^2.15.0"
+  }
+}

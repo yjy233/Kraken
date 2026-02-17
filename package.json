@@ -10,12 +10,18 @@
   "scripts": {
     "dev": "tsx src/index.ts",
     "build": "tsc -p tsconfig.json",
-    "start": "node dist/index.js"
+    "start": "node dist/index.js",
+    "bot": "tsx src/lark/start-bot.ts",
+    "bot:debug": "DEBUG=lark tsx src/lark/start-bot.ts",
+    "bot:inspect": "DEBUG=lark:* tsx src/lark/start-bot.ts --inspect",
+    "bot:verbose": "DEBUG=* tsx src/lark/start-bot.ts",
+    "bot:build": "npm run build && node dist/lark/start-bot.js"
   },
   "engines": {
     "node": ">=18"
   },
   "dependencies": {
+    "@larksuiteoapi/node-sdk": "^1.59.0",
     "@tavily/core": "^0.7.1",
     "dotenv": "^16.4.5",
     "ws": "^8.16.0"
