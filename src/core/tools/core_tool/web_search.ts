@@ -21,8 +21,8 @@ function getTavilyApiKey(context?: ToolContext): string | undefined {
   if (envKey) return envKey;
   
   // 优先级2: Kraken.json 配置
-  if (context?.config?.tools?.tavily?.apiKey) {
-    return context.config.tools.tavily.apiKey;
+  if (context?.config?.tools?.tavilyAPIKey) {
+    return context.config.tools. tavilyAPIKey;
   }
 
   return undefined;
@@ -46,9 +46,6 @@ function isAllowNetwork(context?: ToolContext): boolean {
 function isTavilyEnabled(context?: ToolContext): boolean {
   // 环境变量控制
   if (!isAllowNetwork(context)) return false;
-  
-  // 配置控制（默认启用）
-  if (context?.config?.tools?.tavily?.enabled === false) return false;
   
   return true;
 }

@@ -5,15 +5,10 @@ import type { LLMProtocol } from "../llm/LLMClientFactory";
 import type { MCPServerConfig } from "../mcp/types";
 
 
-export interface TavilyConfig {
-  apiKey?: string;
-  enabled?: boolean;
-}
-
 export interface ToolsConfig {
   enabled?: boolean;
   allowNetwork?: boolean;
-  tavily?: TavilyConfig;
+  tavilyAPIKey?: string;
 }
 
 export interface LarkConfig {
@@ -124,10 +119,7 @@ function loadEnvConfig(): KrakenConfig {
     tools: {
       enabled: process.env.TOOLS_ENABLED !== "false",
       allowNetwork: process.env.ALLOW_NETWORK === "true" || process.env.ALLOW_NETWORK === "1",
-      tavily: {
-        enabled: process.env.TAVILY_ENABLED !== "false",
-        apiKey: process.env.TAVILY_API_KEY
-      }
+      tavilyAPIKey: process.env.TAVILY_API_KEY
     }
   };
 }
@@ -242,6 +234,7 @@ function normalizeConfig(obj: JsonObject): KrakenConfig {
     const toolsObj = obj.tools as JsonObject;
     config.tools = {
       enabled: toolsObj.enabled !== false,
+      tavilyAPIKey: toolsObj.tavilyAPIKey ? (resolveEnvVar(toolsObj.tavilyAPIKey) as string | undefined) : undefined
     };
 
     // Only set allowNetwork when explicitly defined, to avoid overriding inherited values with false.
@@ -255,10 +248,7 @@ function normalizeConfig(obj: JsonObject): KrakenConfig {
     // Parse Tavily config
     if (toolsObj.tavily && typeof toolsObj.tavily === "object" && !Array.isArray(toolsObj.tavily)) {
       const tavilyObj = toolsObj.tavily as JsonObject;
-      config.tools.tavily = {
-        enabled: tavilyObj.enabled !== false,
-        apiKey: typeof tavilyObj.apiKey === "string" ? (resolveEnvVar(tavilyObj.apiKey) as string | undefined) : undefined
-      };
+      config.tools.tavilyAPIKey = typeof tavilyObj.apiKey === "string" ? (resolveEnvVar(tavilyObj.apiKey) as string | undefined) : undefined;
     }
   } else if (obj.allowNetwork === true) {
     // Support root-level allowNetwork even without a tools object
