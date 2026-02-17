@@ -29,7 +29,8 @@ async function main() {
     maxIterations: config.maxIterations,
     temperature: config.temperature,
     logLevel: config.logLevel,
-    mcpServers: config.mcpServers
+    mcpServers: config.mcpServers,
+    tools: config.tools
   });
 
   await cli.start();

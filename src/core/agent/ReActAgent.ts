@@ -4,6 +4,7 @@ import type { SessionStore } from "../session/SessionStore";
 import type { Sandbox } from "../sandbox/Sandbox";
 import type { Logger } from "../utils/logger";
 import type { MessageBus } from "../messagebus";
+import type { KrakenConfig } from "../config/loadConfig";
 import { SYSTEM_PROMPT, buildWorkspaceContext } from "./prompts";
 import { scanSkills } from "../skills/scanner";
 import type { Skill } from "../skills/types";
@@ -20,6 +21,7 @@ export interface ReActAgentOptions {
   temperature?: number;
   systemPrompt?: string; // Allow custom system prompt
   workspaceRoot?: string; // Workspace directory for context
+  config?: KrakenConfig; // Full config for tool context
 }
 
 /**
@@ -198,7 +200,8 @@ After activation, you can use the skill's resources to help the user.
           const result = await tool.run(toolInput, {
             sandbox: this.sandbox,
             sessionId,
-            logger: this.logger
+            logger: this.logger,
+            config: this.options.config
           });
 
           this.messageBus?.emit("agent:tool_result", {

@@ -23,11 +23,21 @@ export const networkDisabled: ToolResult = {
   content: "Network access disabled. Set ALLOW_NETWORK=true to enable."
 };
 
+function isAllowNetwork(context?: ToolContext): any {
+  if (process.env.ALLOW_NETWORK === "true"){
+      return true
+  }
+
+  if (context?.config?.tools?.allowNetwork === true) {
+    return true;
+  }
+}
+
 export async function runWebFetch(
   input: WebFetchInput,
   _context: ToolContext
 ): Promise<ToolResult> {
-  if (process.env.ALLOW_NETWORK !== "true") return networkDisabled;
+  if (!isAllowNetwork(_context)) return networkDisabled;
   try {
     const response = await fetch(input.url, {
       method: input.method ?? "GET",

@@ -150,6 +150,7 @@ async function main() {
       maxIterations: config.maxIterations ?? 6,
       temperature: config.temperature ?? 0.2,
       workspaceRoot,
+      config: { tools: config.tools }
     },
     messageBus,
   });

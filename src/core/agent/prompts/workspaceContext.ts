@@ -159,8 +159,12 @@ function formatWorkspaceContext(workspaceRoot: string, entries: FileTreeEntry[])
   const tree = formatFileTree(entries);
   const fileCount = entries.filter((e) => e.type === "file").length;
   const dirCount = entries.filter((e) => e.type === "directory").length;
+  const now = new Date();
+  const currentTime = now.toLocaleString("zh-CN", { timeZone: "Asia/Shanghai", hour12: false });
 
   return `## Workspace Information
+
+**Current Time**: ${currentTime}
 
 **Working Directory**: \`${workspaceRoot}\`
 

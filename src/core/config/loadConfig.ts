@@ -5,6 +5,17 @@ import type { LLMProtocol } from "../llm/LLMClientFactory";
 import type { MCPServerConfig } from "../mcp/types";
 
 
+export interface TavilyConfig {
+  apiKey?: string;
+  enabled?: boolean;
+}
+
+export interface ToolsConfig {
+  enabled?: boolean;
+  allowNetwork?: boolean;
+  tavily?: TavilyConfig;
+}
+
 export interface LarkConfig {
   enabled?: boolean;
   appId?: string;
@@ -36,6 +47,7 @@ export interface KrakenConfig {
   logLevel?: string;
   mcpServers?: MCPServerConfig[];
   lark?: LarkConfig;
+  tools?: ToolsConfig;
 }
 
 interface JsonObject {
@@ -86,6 +98,13 @@ function loadEnvConfig(): KrakenConfig {
       appId: process.env.LARK_APP_ID || process.env.APP_ID,
       appSecret: process.env.LARK_APP_SECRET || process.env.APP_SECRET,
       debug: process.env.LARK_DEBUG === "true" || process.env.LARK_DEBUG === "1"
+    },
+    tools: {
+      enabled: process.env.TOOLS_ENABLED !== "false",
+      tavily: {
+        enabled: process.env.TAVILY_ENABLED !== "false",
+        apiKey: process.env.TAVILY_API_KEY
+      }
     }
   };
 }
@@ -181,6 +200,24 @@ function normalizeConfig(obj: JsonObject): KrakenConfig {
         ? (larkObj.eventHandlersPath === null ? null : String(larkObj.eventHandlersPath))
         : undefined
     };
+  }
+
+  // Parse Tools configuration (including Tavily)
+  if (obj.tools && typeof obj.tools === "object" && !Array.isArray(obj.tools)) {
+    const toolsObj = obj.tools as JsonObject;
+    config.tools = {
+      enabled: toolsObj.enabled !== false,
+      allowNetwork: toolsObj.allowNetwork === true
+    };
+    
+    // Parse Tavily config
+    if (toolsObj.tavily && typeof toolsObj.tavily === "object" && !Array.isArray(toolsObj.tavily)) {
+      const tavilyObj = toolsObj.tavily as JsonObject;
+      config.tools.tavily = {
+        enabled: tavilyObj.enabled !== false,
+        apiKey: typeof tavilyObj.apiKey === "string" ? tavilyObj.apiKey : undefined
+      };
+    }
   }
 
   return config;

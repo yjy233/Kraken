@@ -12,6 +12,7 @@ import { CLI } from "./CLI";
 import { MCPManager } from "../core/mcp/MCPManager";
 import { convertAllMCPTools } from "../core/mcp/adapter";
 import type { MCPServerConfig } from "../core/mcp/types";
+import type { ToolsConfig } from "../core/config/loadConfig";
 
 export interface CLIConfig {
   protocol?: LLMProtocol;
@@ -31,6 +32,7 @@ export interface CLIConfig {
   temperature?: number;
   logLevel?: string;
   mcpServers?: MCPServerConfig[];
+  tools?: ToolsConfig;
 }
 
 export async function createCLI(config: CLIConfig): Promise<CLI> {
@@ -106,7 +108,8 @@ export async function createCLI(config: CLIConfig): Promise<CLI> {
       model,
       maxIterations: config.maxIterations ?? 6,
       temperature: config.temperature ?? 0.2,
-      workspaceRoot
+      workspaceRoot,
+      config: { tools: config.tools }
     },
     messageBus
   });

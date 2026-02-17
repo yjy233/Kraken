@@ -1,4 +1,4 @@
-import type { ToolDefinition } from "../types";
+import type { ToolDefinition, ToolContext } from "../types";
 import { networkDisabled } from "./web_fetch";
 import { tavily } from "@tavily/core";
 
@@ -10,6 +10,47 @@ export interface WebSearchInput {
   query: string;
   /** 搜索深度：basic 为快速搜索，advanced 为深度搜索 */
   searchDepth?: "basic" | "advanced";
+}
+
+/**
+ * 从环境变量或配置中获取 Tavily API Key
+ */
+function getTavilyApiKey(context?: ToolContext): string | undefined {
+  // 优先级1: 环境变量
+  const envKey = process.env.TAVILY_API_KEY;
+  if (envKey) return envKey;
+  
+  // 优先级2: Kraken.json 配置
+  if (context?.config?.tools?.tavily?.apiKey) {
+    return context.config.tools.tavily.apiKey;
+  }
+
+  return undefined;
+}
+
+function isAllowNetwork(context?: ToolContext): boolean {
+  if (process.env.ALLOW_NETWORK === "true") {
+    return true;
+  }
+
+  if (context?.config?.tools?.allowNetwork === true) {
+    return true;
+  }
+
+  return false;
+}
+
+/**
+ * 检查 Tavily 是否启用
+ */
+function isTavilyEnabled(context?: ToolContext): boolean {
+  // 环境变量控制
+  if (!isAllowNetwork(context)) return false;
+  
+  // 配置控制（默认启用）
+  if (context?.config?.tools?.tavily?.enabled === false) return false;
+  
+  return true;
 }
 
 /**
@@ -40,16 +81,24 @@ export function createWebSearchTool(): ToolDefinition<WebSearchInput> {
       },
       required: ["query"]
     },
-    async run(input) {
+    async run(input, context) {
       // 检查是否允许网络访问
-      if (process.env.ALLOW_NETWORK !== "true") return networkDisabled;
+      if (!isAllowNetwork(context)) return networkDisabled;
+      
+      // 检查 Tavily 是否启用
+      if (!isTavilyEnabled(context)) {
+        return {
+          ok: false,
+          content: "web_search is disabled. Enable it in Kraken.json or set TAVILY_ENABLED=true."
+        };
+      }
 
-      // 获取 Tavily API Key
-      const apiKey = process.env.TAVILY_API_KEY;
+      // 获取 Tavily API Key（支持环境变量或 Kraken.json）
+      const apiKey = getTavilyApiKey(context);
       if (!apiKey) {
         return {
           ok: false,
-          content: "web_search not configured. Set TAVILY_API_KEY in .env file."
+          content: "web_search not configured. Set TAVILY_API_KEY in .env file or add tools.tavily.apiKey to Kraken.json."
         };
       }
 
