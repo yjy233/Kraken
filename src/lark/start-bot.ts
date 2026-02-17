@@ -52,6 +52,27 @@ interface SessionState {
 
 const activeSessions = new Map<string, SessionState>();
 
+// 消息去重 - 确保同一条消息只处理一次
+const processedMessageIds = new Set<string>();
+
+function isMessageProcessed(messageId: string): boolean {
+  if (processedMessageIds.has(messageId)) {
+    return true;
+  }
+  processedMessageIds.add(messageId);
+  
+  // 防止内存无限增长，最多保留最近 1000 条消息
+  if (processedMessageIds.size > 1000) {
+    const iterator = processedMessageIds.values();
+    const firstValue = iterator.next().value;
+    if (firstValue) {
+      processedMessageIds.delete(firstValue);
+    }
+  }
+  
+  return false;
+}
+
 async function main() {
   const config = await loadKrakenConfig(process.cwd());
   const larkConfig = config.lark;
@@ -278,6 +299,12 @@ async function main() {
     try {
       const { sender, content, messageId, messageType, chatType, mentions } = data;
 
+      // 严格去重 - 确保同一条消息只处理一次
+      if (isMessageProcessed(messageId)) {
+        console.log(`[去重] 忽略已处理的消息: ${messageId}`);
+        return;
+      }
+
       if (messageType !== "text") {
         log("忽略非文本消息:", messageType);
         return;
@@ -317,14 +344,41 @@ async function main() {
 
       if (lowerText === "/clear" || lowerText === "清除") {
         agent.clearSession(sessionId);
-        await client.replyTextMessage(messageId, "✅ 对话历史已清除", chatType === "group");
+        
+        const clearCard = {
+          config: { wide_screen_mode: true },
+          header: {
+            title: { tag: "plain_text", content: "✅ 已清除" },
+            template: "green",
+          },
+          elements: [
+            {
+              tag: "div",
+              text: { 
+                tag: "lark_md", 
+                content: "对话历史已清除"
+              },
+            },
+          ],
+        };
+        
+        await client.replyMessage(messageId, JSON.stringify(clearCard), "interactive", chatType === "group");
         return;
       }
 
       if (lowerText === "/help" || lowerText === "帮助") {
-        const helpText = `🤖 **Kraken AI 助手**
-
-我可以帮你：
+        const helpCard = {
+          config: { wide_screen_mode: true },
+          header: {
+            title: { tag: "plain_text", content: "🤖 Kraken AI 助手" },
+            template: "blue",
+          },
+          elements: [
+            {
+              tag: "div",
+              text: { 
+                tag: "lark_md", 
+                content: `**我可以帮你：**
 • 编写和调试代码
 • 分析项目文件
 • 执行命令行操作
@@ -334,8 +388,13 @@ async function main() {
 • /clear - 清除对话历史
 • /help - 显示帮助
 
-直接发送消息即可开始对话！`;
-        await client.replyTextMessage(messageId, helpText, chatType === "group");
+直接发送消息即可开始对话！`
+              },
+            },
+          ],
+        };
+        
+        await client.replyMessage(messageId, JSON.stringify(helpCard), "interactive", chatType === "group");
         return;
       }
 
@@ -343,7 +402,24 @@ async function main() {
       if (activeSessions.has(sessionId)) {
         const existing = activeSessions.get(sessionId)!;
         if (existing.isProcessing) {
-          await client.replyTextMessage(messageId, "⏳ 正在处理上一条消息，请稍后再试...", chatType === "group");
+          const busyCard = {
+            config: { wide_screen_mode: true },
+            header: {
+              title: { tag: "plain_text", content: "⏳ 请稍等" },
+              template: "grey",
+            },
+            elements: [
+              {
+                tag: "div",
+                text: { 
+                  tag: "lark_md", 
+                  content: "正在处理上一条消息，请稍后再试..."
+                },
+              },
+            ],
+          };
+          
+          await client.replyMessage(messageId, JSON.stringify(busyCard), "interactive", chatType === "group");
           return;
         }
       }
@@ -383,22 +459,74 @@ async function main() {
       const elapsed = Date.now() - startTime;
       console.log(`✅ 处理完成 (${elapsed}ms)`);
 
-      // 编辑消息为最终结果
+      // 构建 Markdown 卡片
+      const responseCard = {
+        config: { wide_screen_mode: true },
+        header: {
+          title: { tag: "plain_text", content: "🤖 Kraken AI" },
+          template: "blue",
+        },
+        elements: [
+          {
+            tag: "div",
+            text: { 
+              tag: "lark_md", 
+              content: response
+            },
+          },
+          {
+            tag: "hr",
+          },
+          {
+            tag: "note",
+            elements: [
+              {
+                tag: "plain_text",
+                content: `⏱️ ${elapsed}ms · 输入 /help 查看帮助`
+              }
+            ]
+          }
+        ],
+      };
+
+      // 编辑消息为 Markdown 卡片
       if (thinkingMessageId) {
         try {
-          await client.editMessage(thinkingMessageId, response);
+          // 尝试编辑为卡片
+          await client.editMessage(thinkingMessageId, JSON.stringify(responseCard), "interactive");
+          console.log(`✏️  已编辑为卡片: ${thinkingMessageId}`);
         } catch (editError) {
-          // 编辑失败则发送新消息
-          log("编辑消息失败，发送新消息:", editError);
-          await client.replyTextMessage(messageId, response, replyInThread);
+          // 编辑失败，发送新卡片
+          console.log(`⚠️  编辑失败，发送新卡片: ${editError}`);
+          await client.replyMessage(messageId, JSON.stringify(responseCard), "interactive", replyInThread);
         }
       } else {
-        await client.replyTextMessage(messageId, response, replyInThread);
+        // 没有思考消息ID，直接发送卡片
+        await client.replyMessage(messageId, JSON.stringify(responseCard), "interactive", replyInThread);
       }
       
     } catch (error) {
       console.error("❌ 处理消息失败:", error);
-      await client.replyTextMessage(data.messageId, "❌ 处理消息时出错，请稍后重试。", data.chatType === "group");
+      
+      // 错误信息也用卡片发送
+      const errorCard = {
+        config: { wide_screen_mode: true },
+        header: {
+          title: { tag: "plain_text", content: "❌ 错误" },
+          template: "red",
+        },
+        elements: [
+          {
+            tag: "div",
+            text: { 
+              tag: "lark_md", 
+              content: "处理消息时出错，请稍后重试。"
+            },
+          },
+        ],
+      };
+      
+      await client.replyMessage(data.messageId, JSON.stringify(errorCard), "interactive", data.chatType === "group");
     }
   });
 
