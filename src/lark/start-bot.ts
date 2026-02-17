@@ -87,6 +87,10 @@ async function main() {
   console.log(`  - Lark Enabled: ${config.lark?.enabled ?? "未设置"}`);
   console.log(`  - Lark App ID: ${config.lark?.appId ? "已设置" : "未设置"}`);
   console.log(`  - Lark App Secret: ${config.lark?.appSecret ? "已设置" : "未设置"}`);
+  console.log(`  - Tools Enabled: ${config.tools?.enabled ?? "未设置"}`);
+  console.log(`  - Allow Network: ${config.tools?.allowNetwork ?? "未设置"}`);
+  console.log(`  - Tavily Enabled: ${config.tools?.tavily?.enabled ?? "未设置"}`);
+  console.log(`  - Tavily API Key: ${config.tools?.tavily?.apiKey ? "已设置 (" + config.tools.tavily.apiKey.substring(0, 10) + "...)" : "未设置"}`);
   console.log("");
   
   const larkConfig = config.lark;

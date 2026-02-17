@@ -69,6 +69,28 @@ function parseAllowedDirs(value: string | undefined): string[] | undefined {
   return parts.length > 0 ? parts : undefined;
 }
 
+/**
+ * 替换字符串中的环境变量占位符 ${VAR_NAME}
+ * @param value 可能包含环境变量占位符的值
+ * @returns 替换后的值，如果是环境变量占位符但环境变量不存在则返回 undefined
+ */
+function resolveEnvVar(value: unknown): unknown {
+  if (typeof value !== "string") return value;
+
+  // 匹配 ${VAR_NAME} 或 $VAR_NAME 格式
+  const envVarPattern = /^\$\{([^}]+)\}$|^\$([A-Z_][A-Z0-9_]*)$/;
+  const match = value.match(envVarPattern);
+
+  if (match) {
+    const varName = match[1] || match[2];
+    const envValue = process.env[varName];
+    // 如果环境变量不存在，返回 undefined 而不是占位符字符串
+    return envValue !== undefined ? envValue : undefined;
+  }
+
+  return value;
+}
+
 
 /**
  * 三层配置加载，优先级为：环境变量 < ~/.Kraken/Kraken.json < workspace/.Kraken/Kraken.json
@@ -101,6 +123,7 @@ function loadEnvConfig(): KrakenConfig {
     },
     tools: {
       enabled: process.env.TOOLS_ENABLED !== "false",
+      allowNetwork: process.env.ALLOW_NETWORK === "true" || process.env.ALLOW_NETWORK === "1",
       tavily: {
         enabled: process.env.TAVILY_ENABLED !== "false",
         apiKey: process.env.TAVILY_API_KEY
@@ -130,12 +153,22 @@ function normalizeConfig(obj: JsonObject): KrakenConfig {
   if (typeof obj.protocol === "string") {
     config.protocol = obj.protocol as LLMProtocol;
   }
-  if (typeof obj.apiKey === "string") config.apiKey = obj.apiKey;
+  // 支持环境变量占位符 ${VAR_NAME}
+  if (typeof obj.apiKey === "string") {
+    const resolved = resolveEnvVar(obj.apiKey);
+    if (typeof resolved === "string") config.apiKey = resolved;
+  }
   // 兼容旧字段名
-  if (!config.apiKey && typeof obj.openAIApiKey === "string") config.apiKey = obj.openAIApiKey;
+  if (!config.apiKey && typeof obj.openAIApiKey === "string") {
+    const resolved = resolveEnvVar(obj.openAIApiKey);
+    if (typeof resolved === "string") config.apiKey = resolved;
+  }
   if (typeof obj.model === "string") config.model = obj.model;
   if (typeof obj.summaryModel === "string") config.summaryModel = obj.summaryModel;
-  if (typeof obj.baseUrl === "string") config.baseUrl = obj.baseUrl;
+  if (typeof obj.baseUrl === "string") {
+    const resolved = resolveEnvVar(obj.baseUrl);
+    if (typeof resolved === "string") config.baseUrl = resolved;
+  }
   if (typeof obj.anthropicVersion === "string") config.anthropicVersion = obj.anthropicVersion;
   if (typeof obj.timeoutMs === "number") config.timeoutMs = obj.timeoutMs;
   if (typeof obj.workspaceRoot === "string") config.workspaceRoot = obj.workspaceRoot;
@@ -185,8 +218,8 @@ function normalizeConfig(obj: JsonObject): KrakenConfig {
     const larkObj = obj.lark as JsonObject;
     config.lark = {
       enabled: larkObj.enabled === true,
-      appId: typeof larkObj.appId === "string" ? larkObj.appId : undefined,
-      appSecret: typeof larkObj.appSecret === "string" ? larkObj.appSecret : undefined,
+      appId: typeof larkObj.appId === "string" ? (resolveEnvVar(larkObj.appId) as string | undefined) : undefined,
+      appSecret: typeof larkObj.appSecret === "string" ? (resolveEnvVar(larkObj.appSecret) as string | undefined) : undefined,
       debug: larkObj.debug === true,
       autoReplyOnMention: larkObj.autoReplyOnMention !== false,
       botKeywords: Array.isArray(larkObj.botKeywords)
@@ -209,17 +242,27 @@ function normalizeConfig(obj: JsonObject): KrakenConfig {
     const toolsObj = obj.tools as JsonObject;
     config.tools = {
       enabled: toolsObj.enabled !== false,
-      allowNetwork: toolsObj.allowNetwork === true
     };
-    
+
+    // Only set allowNetwork when explicitly defined, to avoid overriding inherited values with false.
+    // Also support root-level allowNetwork for compatibility.
+    if (typeof toolsObj.allowNetwork === "boolean") {
+      config.tools.allowNetwork = toolsObj.allowNetwork;
+    } else if (obj.allowNetwork === true) {
+      config.tools.allowNetwork = true;
+    }
+
     // Parse Tavily config
     if (toolsObj.tavily && typeof toolsObj.tavily === "object" && !Array.isArray(toolsObj.tavily)) {
       const tavilyObj = toolsObj.tavily as JsonObject;
       config.tools.tavily = {
         enabled: tavilyObj.enabled !== false,
-        apiKey: typeof tavilyObj.apiKey === "string" ? tavilyObj.apiKey : undefined
+        apiKey: typeof tavilyObj.apiKey === "string" ? (resolveEnvVar(tavilyObj.apiKey) as string | undefined) : undefined
       };
     }
+  } else if (obj.allowNetwork === true) {
+    // Support root-level allowNetwork even without a tools object
+    config.tools = { allowNetwork: true };
   }
 
   return config;
@@ -232,6 +275,7 @@ export async function loadKrakenConfig(cwd: string = process.cwd()): Promise<Kra
   const workspacePath = path.join(cwd, ".Kraken", "Kraken.json");
 
   const homeRaw = await readJsonFile(homePath);
+  //console.log(`Loaded home config from ${homeRaw?.tools?.tavily?.apiKey ?}`);
   
   const workspaceRaw = await readJsonFile(workspacePath);
 
