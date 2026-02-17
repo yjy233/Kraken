@@ -36,7 +36,7 @@ export const symbols = {
   error: "✗",
   info: "ℹ",
   warning: "⚠",
-  thinking: "🤔",
+  thinking: "🤔思考中...",
   tool: "🔧",
   response: "💬",
   arrow: "→",

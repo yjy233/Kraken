@@ -316,7 +316,7 @@ async function main() {
 
       if (lowerText === "/clear" || lowerText === "清除") {
         agent.clearSession(sessionId);
-        await client.replyTextMessage(messageId, "✅ 对话历史已清除");
+        await client.replyTextMessage(messageId, "✅ 对话历史已清除", chatType === "group");
         return;
       }
 
@@ -334,7 +334,7 @@ async function main() {
 • /help - 显示帮助
 
 直接发送消息即可开始对话！`;
-        await client.replyTextMessage(messageId, helpText);
+        await client.replyTextMessage(messageId, helpText, chatType === "group");
         return;
       }
 
@@ -342,14 +342,21 @@ async function main() {
       if (activeSessions.has(sessionId)) {
         const existing = activeSessions.get(sessionId)!;
         if (existing.isProcessing) {
-          await client.replyTextMessage(messageId, "⏳ 正在处理上一条消息，请稍后再试...");
+          await client.replyTextMessage(messageId, "⏳ 正在处理上一条消息，请稍后再试...", chatType === "group");
           return;
         }
       }
 
+      // 先发送 emoji 提示（群聊中使用话题回复）
+      const replyInThread = chatType === "group";
+      console.log(`📤 发送思考提示: chatType=${chatType}, replyInThread=${replyInThread}`);
+      const thinkingMsg = await client.replyTextMessage(messageId, "🤔", replyInThread);
+      console.log(`📨 思考消息已发送: messageId=${thinkingMsg.data?.messageId}`);
+      const thinkingMessageId = thinkingMsg.data?.messageId;
+
       // 创建会话状态
       const sessionState: SessionState = {
-        messageId,
+        messageId: thinkingMessageId || messageId,  // 使用思考消息的ID以便后续编辑
         chatId: data.chatId,
         chatType,
         senderOpenId: sender.senderId.open_id,
@@ -361,22 +368,36 @@ async function main() {
       };
       activeSessions.set(sessionId, sessionState);
 
-      // 发送初始状态
-      await client.replyTextMessage(messageId, "🤔 正在思考...");
-
       // 调用 Agent
       const startTime = Date.now();
-      const response = await agent.run(sessionId, cleanText);
+      let response: string;
+      
+      try {
+        response = await agent.run(sessionId, cleanText);
+      } catch (error) {
+        console.error("Agent 执行失败:", error);
+        response = "❌ 处理请求时出错，请稍后重试。";
+      }
+      
       const elapsed = Date.now() - startTime;
-
       console.log(`✅ 处理完成 (${elapsed}ms)`);
 
-      // 发送最终回复
-      await client.replyTextMessage(messageId, response);
+      // 编辑消息为最终结果
+      if (thinkingMessageId) {
+        try {
+          await client.editMessage(thinkingMessageId, response);
+        } catch (editError) {
+          // 编辑失败则发送新消息
+          log("编辑消息失败，发送新消息:", editError);
+          await client.replyTextMessage(messageId, response, replyInThread);
+        }
+      } else {
+        await client.replyTextMessage(messageId, response, replyInThread);
+      }
       
     } catch (error) {
       console.error("❌ 处理消息失败:", error);
-      await client.replyTextMessage(data.messageId, "❌ 处理消息时出错，请稍后重试。");
+      await client.replyTextMessage(data.messageId, "❌ 处理消息时出错，请稍后重试。", data.chatType === "group");
     }
   });
 

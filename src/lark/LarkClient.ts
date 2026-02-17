@@ -425,6 +425,37 @@ export class LarkClient {
   }
 
   /**
+   * 编辑已发送的消息
+   */
+  async editMessage(
+    messageId: string,
+    content: string,
+    msgType: SendMessageConfig["msgType"] = "text"
+  ): Promise<LarkApiResponse<SendMessageResponse>> {
+    if (!this.client) {
+      throw new Error("LarkClient 未启动，请先调用 start() 方法");
+    }
+
+    this.log(`编辑消息: messageId=${messageId}`);
+
+    try {
+      const response = await this.client.im.message.patch({
+        path: {
+          message_id: messageId,
+        },
+        data: {
+          content: msgType === "text" ? JSON.stringify({ text: content }) : content,
+        },
+      });
+
+      return response as LarkApiResponse<SendMessageResponse>;
+    } catch (error) {
+      this.log("编辑消息失败:", error);
+      throw error;
+    }
+  }
+
+  /**
    * 回复消息
    */
   async replyMessage(
@@ -437,18 +468,24 @@ export class LarkClient {
       throw new Error("LarkClient 未启动，请先调用 start() 方法");
     }
 
-    this.log(`回复消息: messageId=${messageId}, type=${msgType}`);
+    this.log(`回复消息: messageId=${messageId}, type=${msgType}, replyInThread=${replyInThread}`);
 
     try {
+      const requestData: any = {
+        content: msgType === "text" ? JSON.stringify({ text: content }) : content,
+        msg_type: msgType!,
+      };
+      
+      // reply_in_thread 控制是否以话题形式回复（在群聊中形成"回复XXX"的效果）
+      if (replyInThread) {
+        requestData.reply_in_thread = true;
+      }
+
       const response = await this.client.im.message.reply({
         path: {
           message_id: messageId,
         },
-        data: {
-          content: msgType === "text" ? JSON.stringify({ text: content }) : content,
-          msg_type: msgType!,
-          reply_in_thread: replyInThread,
-        },
+        data: requestData,
       });
 
       return response as LarkApiResponse<SendMessageResponse>;
